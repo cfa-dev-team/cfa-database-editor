@@ -1,0 +1,464 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:CfaDatabaseEditor.ViewModels"
+        xmlns:m="using:CfaDatabaseEditor.Models"
+        xmlns:conv="using:CfaDatabaseEditor.Converters"
+        xmlns:ctrl="using:CfaDatabaseEditor.Controls"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="800"
+        x:Class="CfaDatabaseEditor.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="CFA Database Editor v1.0.0 beta"
+        Width="1400" Height="850"
+        MinWidth="900" MinHeight="600">
+
+    <Window.Resources>
+        <conv:NationIdToColorConverter x:Key="NationColorConv"/>
+        <conv:NullableIntToStringConverter x:Key="NullIntConv"/>
+        <conv:PathToBitmapConverter x:Key="PathToBitmap"/>
+        <conv:CardToColorBrushConverter x:Key="CardColorConv"/>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Menu Bar -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open Database..." Click="OnOpenDatabaseClick"
+                          HotKey="Ctrl+O"/>
+                <MenuItem Header="_Save All"
+                          Command="{Binding SaveCommand}"
+                          HotKey="Ctrl+S"/>
+                <Separator/>
+                <MenuItem Header="E_xit" Click="OnExitClick"/>
+            </MenuItem>
+            <MenuItem Header="_Card">
+                <MenuItem Header="_New Card">
+                    <MenuItem Header="Cray Elemental (NoClan)" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.CrayElemental}"/>
+                    <MenuItem Header="Order Cards" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.OrderFilter}"/>
+                    <Separator/>
+                    <MenuItem Header="Dragon Empire" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.DragonEmpire}"/>
+                    <MenuItem Header="Dark States" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.DarkStates}"/>
+                    <MenuItem Header="Keter Sanctuary" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.KeterSanctuary}"/>
+                    <MenuItem Header="Stoicheia" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.Stoicheia}"/>
+                    <MenuItem Header="Brandt Gate" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.BrandtGate}"/>
+                    <MenuItem Header="Lyrical Monasterio" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.LyricalMonasterio}"/>
+                </MenuItem>
+                <MenuItem Header="_Duplicate" Command="{Binding DuplicateCardCommand}"
+                          HotKey="Ctrl+D"/>
+            </MenuItem>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="EN Database _Sync..." Click="OnEnSyncClick"/>
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About" Click="OnAboutClick"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Status Bar -->
+        <Border DockPanel.Dock="Bottom" Background="#F0F0F0" Padding="8,4">
+            <TextBlock Text="{Binding StatusText}" FontSize="12"/>
+        </Border>
+
+        <!-- Main Content -->
+        <Grid ColumnDefinitions="260,Auto,*,Auto,320">
+
+            <!-- LEFT: Card List Panel -->
+            <DockPanel Grid.Column="0" Margin="4">
+                <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,4">
+                    <TextBox Watermark="Search name, text, or ID..."
+                             Text="{Binding SearchText}"
+                             Margin="0,2"/>
+
+                    <ComboBox
+                              ItemsSource="{Binding NationOptions}"
+                              SelectedItem="{Binding SelectedNationFilter}"
+                              HorizontalAlignment="Stretch">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="m:ClanDefinition">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Border Width="12" Height="12" CornerRadius="2"
+                                            Background="{Binding DisplayColor, Converter={x:Static conv:ColorToBrushConverter.Instance}}"/>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <ComboBox
+                              ItemsSource="{Binding ClanOptions}"
+                              SelectedItem="{Binding SelectedClanFilter}"
+                              HorizontalAlignment="Stretch">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="m:ClanDefinition">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Border Width="12" Height="12" CornerRadius="2"
+                                            Background="{Binding DisplayColor, Converter={x:Static conv:ColorToBrushConverter.Instance}}"/>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <CheckBox Content="No Nation" IsChecked="{Binding FilterNoNation}"/>
+                        <CheckBox Content="No Clan" IsChecked="{Binding FilterNoClan}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <ListBox ItemsSource="{Binding FilteredCards}"
+                         SelectedItem="{Binding SelectedCard}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="m:Card">
+                            <DockPanel Margin="0,1">
+                                <Border Width="4" DockPanel.Dock="Left" Margin="0,0,6,0" CornerRadius="2"
+                                        Background="{Binding Converter={StaticResource CardColorConv}}"/>
+                                <TextBlock>
+                                    <Run Text="[" FontSize="11" Foreground="Gray"/>
+                                    <Run Text="{Binding CardStat}" FontSize="11" Foreground="Gray"/>
+                                    <Run Text="] " FontSize="11" Foreground="Gray"/>
+                                    <Run Text="{Binding CardName}"/>
+                                </TextBlock>
+                            </DockPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <GridSplitter Grid.Column="1" Width="4" ResizeDirection="Columns"/>
+
+            <!-- CENTER: Card Editor Panel -->
+            <ScrollViewer Grid.Column="2" Margin="4"
+                          HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="4" IsVisible="{Binding SelectedCard, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <StackPanel Spacing="4" DataContext="{Binding SelectedCard}" x:DataType="m:Card" x:CompileBindings="False">
+
+                    <!-- Core Properties -->
+                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="Core Properties" FontWeight="Bold" FontSize="14"/>
+                            <Grid ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Card ID:" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CardStat}" VerticalAlignment="Center" FontWeight="Bold"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Name:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CardName}" x:DataType="m:Card"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                           Text="{Binding EncodingIssueDetails}" Foreground="Red" FontSize="11"
+                                           TextWrapping="Wrap" IsVisible="{Binding HasEncodingIssue}"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Grade:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="3" Grid.Column="1" Value="{Binding UnitGrade}" Minimum="0" Maximum="5" Width="120" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Power:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="4" Grid.Column="1" Value="{Binding PowerStat}" Minimum="0" Increment="1000" Width="160" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Shield:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="5" Grid.Column="1" Value="{Binding DefensePowerStat}" Minimum="0" Increment="5000" Width="160" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="Nation:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="6" Grid.Column="1" Value="{Binding DCards}" Minimum="0" Maximum="14" Width="120" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="7" Grid.Column="0" Text="Clan:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="7" Grid.Column="1" Value="{Binding CardInClan}" Minimum="0" Maximum="35" Width="120" HorizontalAlignment="Left"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Card Text -->
+                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Card Text" FontWeight="Bold" FontSize="14"/>
+                            <TextBox Text="{Binding CardText}" AcceptsReturn="True"
+                                     TextWrapping="Wrap" MinHeight="120" MaxHeight="300"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Trigger -->
+                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Trigger" FontWeight="Bold" FontSize="14"/>
+                            <ComboBox SelectedIndex="{Binding TriggerUnit}" Width="200" HorizontalAlignment="Left">
+                                <ComboBoxItem Content="None" Tag="0"/>
+                                <ComboBoxItem Content="Draw (1)"/>
+                                <ComboBoxItem Content="Critical (2)"/>
+                                <ComboBoxItem Content="Stand (3)"/>
+                                <ComboBoxItem Content="Heal (4)"/>
+                                <ComboBoxItem Content="Front (5)"/>
+                                <ComboBoxItem Content="Over (6)"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Persona Ride -->
+                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Persona Ride" FontWeight="Bold" FontSize="14"/>
+                            <WrapPanel>
+                                <CheckBox Content="Persona Ride" IsChecked="{Binding PersonaRide}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Activated" IsChecked="{Binding PersonaRideAct}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Forbid Cross Upon" IsChecked="{Binding ForbidCrossPersonaRideUpon}"/>
+                            </WrapPanel>
+                            <Grid ColumnDefinitions="100,*">
+                                <TextBlock Text="Cross Name:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Column="1" Text="{Binding PersonaRideCardName}" Watermark="PersonaRideCardName"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Imaginary Gifts -->
+                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Imaginary Gifts" FontWeight="Bold" FontSize="14"/>
+                            <TextBlock Text="On Ride:" FontSize="12" Foreground="Gray"/>
+                            <WrapPanel>
+                                <CheckBox Content="Force" IsChecked="{Binding BlueTokenAdd}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Protect" IsChecked="{Binding GreenTokenAdd}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Accel" IsChecked="{Binding OrangeTokenAdd}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Both Force" IsChecked="{Binding BlueTokenBoth}"/>
+                            </WrapPanel>
+                            <TextBlock Text="Generators (Shift+Click):" FontSize="12" Foreground="Gray"/>
+                            <WrapPanel>
+                                <CheckBox Content="Force" IsChecked="{Binding ForceAdd}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Protect" IsChecked="{Binding ProtectAdd}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Accel" IsChecked="{Binding AccelAdd}" Margin="0,0,12,0"/>
+                                <CheckBox Content="All Gifts" IsChecked="{Binding GiftAdd}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Select Gift" IsChecked="{Binding GiftAddSelect}"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Token Generator -->
+                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Token Generator" FontWeight="Bold" FontSize="14"/>
+                            <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Summoner ID:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="0" Grid.Column="1" Value="{Binding TokenSummoner}" Width="160" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Summoner 2:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="1" Grid.Column="1" Value="{Binding TokenSummoner2}" Width="160" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Summoner 3:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="2" Grid.Column="1" Value="{Binding TokenSummoner3}" Width="160" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Position:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding TokenSummonerPosition}" Watermark="V/R/VR/SHIFT/RodeUpon" Width="200" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Quantity:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="4" Grid.Column="1" Value="{Binding TokenSummonerQuantity}" Minimum="1" Maximum="2" Width="120" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="RodeUpon #:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="5" Grid.Column="1" Value="{Binding TokenSummonerRodeUponNumber}" Width="160" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="Choice Text:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding TokenSummoner2Text}" Watermark="Prompt question"/>
+
+                                <TextBlock Grid.Row="7" Grid.Column="0" Text="Button 1:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding TokenSummoner2Button1}" Width="200" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="8" Grid.Column="0" Text="Button 2:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding TokenSummoner2Button2}" Width="200" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="9" Grid.Column="0" Text="Button 3:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding TokenSummoner2Button3}" Width="200" HorizontalAlignment="Left"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Search Effect -->
+                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Search Effect" FontWeight="Bold" FontSize="14"/>
+                            <CheckBox Content="Enable Search Effect" IsChecked="{Binding SearchEffect}"/>
+                            <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4"
+                                  IsVisible="{Binding SearchEffect}">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Position:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding SearchEffectPosition}" Watermark="V/R/VR/SHIFT" Width="150" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Look At #:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="1" Grid.Column="1" Value="{Binding SearchEffectLookAtQuantity}" Width="100" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Mode:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding SearchEffectMode}" Watermark="Card/Clan/NoClan/CheckGrade/..." Width="250" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Argument 1:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding SearchEffectArgument1}" Width="200" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Argument 2:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding SearchEffectArgument2}" Width="200" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Argument 3:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding SearchEffectArgument3}" Width="200" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="Found Action:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding ActivateSearchFoundAction}" Watermark="AddToHand/V/SendToTopCard[UpTo]" Width="250" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="7" Grid.Column="0" Text="Rest Action:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding ActivateSearchRestAction}" Watermark="Shu/SelectBot/ShuffleBotDeck" Width="250" HorizontalAlignment="Left"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Arms -->
+                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Arms" FontWeight="Bold" FontSize="14"/>
+                            <WrapPanel>
+                                <CheckBox Content="Arms" IsChecked="{Binding Arms}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Left Arms" IsChecked="{Binding LeftArms}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Right Arms" IsChecked="{Binding RightArms}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Arms As Unit" IsChecked="{Binding ArmsAsUnit}"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Legality & Visibility -->
+                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Legality &amp; Visibility" FontWeight="Bold" FontSize="14"/>
+                            <WrapPanel>
+                                <CheckBox Content="Restricted" IsChecked="{Binding CardLimidet}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Banned" IsChecked="{Binding CardBanned}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Premium Only" IsChecked="{Binding OldCardStat}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Premium 10k Trigger" IsChecked="{Binding NewTriggerStat}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Hide in Editor" IsChecked="{Binding DontShowInDeckEditor}"/>
+                            </WrapPanel>
+                            <Grid ColumnDefinitions="100,*">
+                                <TextBlock Text="Max Copies:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Column="1" Value="{Binding CardCopies}" Minimum="0" Maximum="99" Width="120" HorizontalAlignment="Left"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Special Mechanics -->
+                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Special Mechanics" FontWeight="Bold" FontSize="14"/>
+                            <WrapPanel>
+                                <CheckBox Content="G-Zone" IsChecked="{Binding ExtraDeck}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Quick Shield" IsChecked="{Binding QuickShieldAdd}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Remove From Drop" IsChecked="{Binding RemoveFromDrop}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Regalis Piece" IsChecked="{Binding RegalisPiece}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Astral Plane" IsChecked="{Binding Uranus}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Treasure Markers" IsChecked="{Binding MimicNotEvil}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Counters" IsChecked="{Binding UseCounters}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Ult. Stride Remove" IsChecked="{Binding DeleteAllExtraInEndPhase}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Extended TextBox" IsChecked="{Binding ExtendedTextBox}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Token In Hand" IsChecked="{Binding TokenInHand}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Can Attack Back Row" IsChecked="{Binding CanAttackFromBackRow}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Enable Back Row Attack" IsChecked="{Binding EnableAttackFromBackRow}"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Advanced -->
+                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Advanced" FontWeight="Bold" FontSize="14"/>
+                            <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Nation 2:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="0" Grid.Column="1" Value="{Binding DCards2}" Width="120" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Clan 2-9:" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                    <NumericUpDown FormatString="0" Value="{Binding CardInClan2}" Width="120"/>
+                                    <NumericUpDown FormatString="0" Value="{Binding CardInClan3}" Width="120"/>
+                                    <NumericUpDown FormatString="0" Value="{Binding CardInClan4}" Width="120"/>
+                                </StackPanel>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Another Side:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="2" Grid.Column="1" Value="{Binding AnotherSide}" Width="160" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Reassigned ID:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="3" Grid.Column="1" Value="{Binding CardReassignedId}" Width="160" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="V Attack Buff:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="4" Grid.Column="1" Value="{Binding AttackFromVBuff}" Width="160" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="R Attack Buff:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="5" Grid.Column="1" Value="{Binding AttackFromRBuff}" Width="160" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="VR Attack Buff:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="6" Grid.Column="1" Value="{Binding AttackFromVRBuff}" Width="160" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="7" Grid.Column="0" Text="Required Van:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding RequiredVan}" Width="250" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="8" Grid.Column="0" Text="Move All:" VerticalAlignment="Center"/>
+                                <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding MoveAll}" Watermark="Bind/Hand/Drop/OriginalDress" Width="200" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="9" Grid.Column="0" Text="Reveal Top X:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="9" Grid.Column="1" Value="{Binding RevealTopX}" Width="120" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="10" Grid.Column="0" Text="Buddy World:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="10" Grid.Column="1" Value="{Binding BuddyWorld}" Width="120" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="11" Grid.Column="0" Text="Gauge Charge:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="11" Grid.Column="1" Value="{Binding GaugeCharge}" Width="120" HorizontalAlignment="Left"/>
+
+                                <TextBlock Grid.Row="12" Grid.Column="0" Text="Deck Grade +/-:" VerticalAlignment="Center"/>
+                                <NumericUpDown FormatString="0" Grid.Row="12" Grid.Column="1" Value="{Binding UnitGradeIncrementInDeck}" Width="120" HorizontalAlignment="Left"/>
+                            </Grid>
+                            <WrapPanel Margin="0,4,0,0">
+                                <CheckBox Content="Reveal (Starhulk)" IsChecked="{Binding Reveal}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Scene Effect (Harri)" IsChecked="{Binding SceneEffect}" Margin="0,0,12,0"/>
+                                <CheckBox Content="Coco Add" IsChecked="{Binding CocoAdd}"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Source Info -->
+                    <Border Background="#EFEFEF" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <TextBlock Text="{Binding SourceFile, StringFormat='File: {0}'}" FontSize="11" Foreground="Gray"/>
+                            <TextBlock Text="{Binding SourceLineStart, StringFormat='Lines: {0}'}" FontSize="11" Foreground="Gray"/>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <GridSplitter Grid.Column="3" Width="4" ResizeDirection="Columns"/>
+
+            <!-- RIGHT: Preview Panel -->
+            <DockPanel Grid.Column="4" Margin="4">
+                <!-- Card Image -->
+                <Border DockPanel.Dock="Top" Background="#333" CornerRadius="4"
+                        Height="440" Margin="0,0,0,4">
+                    <Image Source="{Binding CardImagePath, Converter={StaticResource PathToBitmap}}"
+                           Stretch="Uniform"
+                           StretchDirection="DownOnly"/>
+                </Border>
+
+                <!-- Image Actions -->
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
+                    <Button Content="Replace Image"
+                            Click="OnReplaceImageClick"
+                            HorizontalAlignment="Stretch"/>
+                </StackPanel>
+
+                <!-- In-Game Text Preview -->
+                <Border Background="#FFF" CornerRadius="4" BorderBrush="#DDD" BorderThickness="1">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="In-Game Text Preview"
+                                   FontWeight="Bold" FontSize="12" Margin="8,4,8,2"/>
+                        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto">
+                            <ctrl:CardTextPreviewControl
+                                CardText="{Binding ((vm:MainWindowViewModel)DataContext).SelectedCard.CardText, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CardName="{Binding ((vm:MainWindowViewModel)DataContext).SelectedCard.CardName, RelativeSource={RelativeSource AncestorType=Window}}"
+                                ExtendedTextBox="{Binding ((vm:MainWindowViewModel)DataContext).SelectedCard.ExtendedTextBox, RelativeSource={RelativeSource AncestorType=Window}}"
+                                x:DataType="ctrl:CardTextPreviewControl"
+                                MinHeight="430"/>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </DockPanel>
+
+        </Grid>
+    </DockPanel>
+</Window>
