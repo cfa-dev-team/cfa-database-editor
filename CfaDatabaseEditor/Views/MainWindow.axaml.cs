@@ -83,6 +83,22 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void OnJpArchiveClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm && vm.Database.IsLoaded)
+        {
+            var archiveWindow = new JpArchiveWindow();
+            archiveWindow.SetDatabase(vm.Database, new ImageService(vm.Database));
+            await archiveWindow.ShowDialog(this);
+
+            if (archiveWindow.CardsWereAdded)
+            {
+                vm.RefreshCardList();
+                vm.StatusText = "Cards added from JP archive. Save the database to persist.";
+            }
+        }
+    }
+
     private async void OnAboutClick(object? sender, RoutedEventArgs e)
     {
         var about = new Window
@@ -109,7 +125,7 @@ public partial class MainWindow : Window
         });
         panel.Children.Add(new TextBlock
         {
-            Text = "Version 1.0.0 beta",
+            Text = "Version 1.1.0 beta",
             FontSize = 13,
             Foreground = Avalonia.Media.Brushes.Gray
         });

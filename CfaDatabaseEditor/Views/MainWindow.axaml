@@ -9,7 +9,7 @@
         mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="800"
         x:Class="CfaDatabaseEditor.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="CFA Database Editor v1.0.0 beta"
+        Title="CFA Database Editor v1.1.0 beta"
         Width="1400" Height="850"
         MinWidth="900" MinHeight="600">
 
@@ -49,6 +49,7 @@
             </MenuItem>
             <MenuItem Header="_Tools">
                 <MenuItem Header="EN Database _Sync..." Click="OnEnSyncClick"/>
+                <MenuItem Header="_JP Card Archive..." Click="OnJpArchiveClick"/>
             </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem Header="_About" Click="OnAboutClick"/>

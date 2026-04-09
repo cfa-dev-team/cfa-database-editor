@@ -312,6 +312,12 @@ public partial class MainWindowViewModel : ViewModelBase
         StatusText = $"{_db.AllCards.Count} cards loaded | {modCount} file(s) modified";
     }
 
+    public void RefreshCardList()
+    {
+        _allCardsList = new List<Card>(_db.AllCards);
+        ApplyFilters();
+    }
+
     private void ApplyFilters()
     {
         var filtered = _allCardsList.AsEnumerable();
