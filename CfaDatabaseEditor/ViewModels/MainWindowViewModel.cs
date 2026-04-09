@@ -27,10 +27,12 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private ClanDefinition? _selectedClanFilter;
     [ObservableProperty] private bool _filterNoNation;
     [ObservableProperty] private bool _filterNoClan;
+    [ObservableProperty] private int _selectedGradeFilter; // -1 = Any, 0-4 = exact, 5 = 5+
 
     // Filter options
     public ObservableCollection<ClanDefinition> NationOptions { get; } = new();
     public ObservableCollection<ClanDefinition> ClanOptions { get; } = new();
+    public List<string> GradeOptions { get; } = new() { "Any Grade", "Grade 0", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5+" };
 
     // Card editor - bound to selected card
     [ObservableProperty] private string? _cardImagePath;
@@ -40,13 +42,21 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public DatabaseService Database => _db;
 
+    private static readonly ClanDefinition AllNationsSentinel = new() { Id = -1, Name = "All Nations", Type = FactionType.Nation, DisplayColor = Avalonia.Media.Color.Parse("#808080") };
+    private static readonly ClanDefinition AllClansSentinel = new() { Id = -1, Name = "All Clans", Type = FactionType.Clan, DisplayColor = Avalonia.Media.Color.Parse("#808080") };
+
     public MainWindowViewModel()
     {
-        // Populate filter options
+        // Populate filter options with reset entries
+        NationOptions.Add(AllNationsSentinel);
         foreach (var n in ClanRegistry.AllNations.Where(n => n.Era != FactionEra.Other))
             NationOptions.Add(n);
+        ClanOptions.Add(AllClansSentinel);
         foreach (var c in ClanRegistry.AllClans.Where(c => c.Era != FactionEra.Other))
             ClanOptions.Add(c);
+
+        SelectedNationFilter = AllNationsSentinel;
+        SelectedClanFilter = AllClansSentinel;
     }
 
     partial void OnSelectedCardChanged(Card? value)
@@ -61,6 +71,7 @@ public partial class MainWindowViewModel : ViewModelBase
     partial void OnSelectedNationFilterChanged(ClanDefinition? value) => ApplyFilters();
     partial void OnSelectedClanFilterChanged(ClanDefinition? value) => ApplyFilters();
     partial void OnFilterNoNationChanged(bool value) => ApplyFilters();
+    partial void OnSelectedGradeFilterChanged(int value) => ApplyFilters();
     partial void OnFilterNoClanChanged(bool value) => ApplyFilters();
 
     public async Task LoadFromPathAsync(string path)
@@ -318,7 +329,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             filtered = filtered.Where(c => c.DCards == 0);
         }
-        else if (SelectedNationFilter != null)
+        else if (SelectedNationFilter != null && SelectedNationFilter != AllNationsSentinel)
         {
             var nationId = SelectedNationFilter.Id;
             filtered = filtered.Where(c => c.DCards == nationId || c.DCards2 == nationId);
@@ -328,7 +339,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             filtered = filtered.Where(c => !c.CardInClan.HasValue);
         }
-        else if (SelectedClanFilter != null)
+        else if (SelectedClanFilter != null && SelectedClanFilter != AllClansSentinel)
         {
             var clanId = SelectedClanFilter.Id;
             filtered = filtered.Where(c =>
@@ -337,6 +348,16 @@ public partial class MainWindowViewModel : ViewModelBase
                 c.CardInClan5 == clanId || c.CardInClan6 == clanId ||
                 c.CardInClan7 == clanId || c.CardInClan8 == clanId ||
                 c.CardInClan9 == clanId);
+        }
+
+        // Grade filter: 0 = Any, 1 = Grade 0, 2 = Grade 1, ... 5 = Grade 4, 6 = Grade 5+
+        if (SelectedGradeFilter > 0)
+        {
+            int grade = SelectedGradeFilter - 1; // map index to grade value
+            if (grade >= 5)
+                filtered = filtered.Where(c => c.UnitGrade >= 5);
+            else
+                filtered = filtered.Where(c => c.UnitGrade == grade);
         }
 
         FilteredCards = new ObservableCollection<Card>(filtered);

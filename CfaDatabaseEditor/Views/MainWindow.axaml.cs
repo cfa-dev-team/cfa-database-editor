@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using CfaDatabaseEditor.Services;
@@ -11,6 +12,17 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        KeyDown += OnWindowKeyDown;
+    }
+
+    private void OnWindowKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.F && e.KeyModifiers == KeyModifiers.Control)
+        {
+            SearchBox.Focus();
+            SearchBox.SelectAll();
+            e.Handled = true;
+        }
     }
 
     private async void OnOpenDatabaseClick(object? sender, RoutedEventArgs e)

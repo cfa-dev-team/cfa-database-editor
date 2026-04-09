@@ -11,7 +11,7 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        Log = new StreamWriter("/tmp/cfa-debug.log", append: false) { AutoFlush = true };
+        Log = new StreamWriter("./editor.log", append: false) { AutoFlush = true };
         Log.WriteLine($"[{DateTime.Now:HH:mm:ss}] App starting...");
 
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
