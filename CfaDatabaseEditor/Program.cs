@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using System;
+using System.IO;
 using System.Text;
 
 namespace CfaDatabaseEditor;
@@ -11,7 +12,8 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        Log = new StreamWriter("./editor.log", append: false) { AutoFlush = true };
+        var logPath = Path.Combine(AppContext.BaseDirectory, "editor.log");
+        Log = new StreamWriter(logPath, append: false) { AutoFlush = true };
         Log.WriteLine($"[{DateTime.Now:HH:mm:ss}] App starting...");
 
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
