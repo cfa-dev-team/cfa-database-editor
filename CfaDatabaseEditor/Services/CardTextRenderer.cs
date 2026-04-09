@@ -29,8 +29,10 @@ public class CardTextRenderer
     private SKTypeface? _fontRegular;
     private SKTypeface? _fontItalic;
     private SKTypeface? _fontTitle;
-    private const float FontSize = 13f; // Scaled from GML's 10pt to look good at 300px width
-    private const float TitleFontSize = 15f; // Oswald 12pt scaled for display
+    private float FontSize = 12.79f; // Scaled from GML's 10pt to look good at 300px width
+
+    public void SetFontSize(float size) => FontSize = size;
+    private const float TitleFontSize = 16f; // Oswald 12pt scaled for display
     private const float TitleLineHeight = 18f; // GML draw_text_ext sep=18
     private const float TitleSkewAngle = -0.2f; // GM faux italic skew
     private const float CostFontSize = 10f;
@@ -65,7 +67,7 @@ public class CardTextRenderer
         _fontRegular = SKTypeface.FromFamilyName("Georgia Pro")
                     ?? SKTypeface.FromFamilyName("Georgia")
                     ?? SKTypeface.FromFamilyName("serif");
-        _fontItalic = SKTypeface.FromFamilyName("Georgia Pro", SKFontStyle.Italic)
+        _fontItalic = SKTypeface.FromFamilyName("Georgia Pro", SKFontStyleWeight.Light, SKFontStyleWidth.Normal, SKFontStyleSlant.Italic)
                    ?? SKTypeface.FromFamilyName("Georgia", SKFontStyle.Italic)
                    ?? SKTypeface.FromFamilyName("serif", SKFontStyle.Italic);
 
@@ -102,13 +104,13 @@ public class CardTextRenderer
         // Draw title - centered, Oswald bold, faux italic (skewed)
         if (!string.IsNullOrEmpty(cardName))
         {
-            DrawTitle(canvas, cardName.Trim(), TitleY);
+            DrawTitle(canvas, UnescapeHash(cardName.Trim()), TitleY);
         }
 
         // Draw card text
         if (!string.IsNullOrEmpty(rawCardText))
         {
-            Render(canvas, rawCardText, 10, TextY);
+            Render(canvas, UnescapeHash(rawCardText), 10, TextY);
         }
 
         return bgHeight;
@@ -120,8 +122,7 @@ public class CardTextRenderer
         {
             IsAntialias = true,
             SubpixelText = true,
-            HintingLevel = SKPaintHinting.Normal,
-            IsAutohinted = true,
+            HintingLevel = SKPaintHinting.Slight,
             TextSize = TitleFontSize,
             Typeface = _fontTitle,
             Color = SKColors.Black,
@@ -168,7 +169,8 @@ public class CardTextRenderer
     {
         if (_fontRegular == null) return 0;
 
-        var preprocessed = TextPreprocessor.Preformat(rawCardText);
+        var preprocessed = TextPreprocessor.Preformat(rawCardText)
+            .Replace("\r\n", "\n").Replace("\r", "\n");
         var words = preprocessed.Split(' ');
 
         // State machine (matching GML globals)
@@ -187,8 +189,7 @@ public class CardTextRenderer
         {
             IsAntialias = true,
             SubpixelText = true,
-            HintingLevel = SKPaintHinting.Normal,
-            IsAutohinted = true,
+            HintingLevel = SKPaintHinting.Slight,
             TextSize = FontSize,
             Typeface = _fontRegular,
             Color = SKColors.Black
@@ -198,8 +199,7 @@ public class CardTextRenderer
         {
             IsAntialias = true,
             SubpixelText = true,
-            HintingLevel = SKPaintHinting.Normal,
-            IsAutohinted = true,
+            HintingLevel = SKPaintHinting.Slight,
             TextSize = CostFontSize,
             Typeface = _fontRegular,
             Color = SKColors.White
@@ -223,9 +223,9 @@ public class CardTextRenderer
             }
 
             // Handle newlines
-            if (wordOriginal.Contains('\n') || wordOriginal.Contains('\r'))
+            if (wordOriginal.Contains('\n'))
             {
-                var parts = wordOriginal.Split(new[] { '\n', '\r' }, StringSplitOptions.None);
+                var parts = wordOriginal.Split('\n');
                 for (int p = 0; p < parts.Length; p++)
                 {
                     if (p > 0)
@@ -257,7 +257,7 @@ public class CardTextRenderer
                 // Check if next word would overflow
                 if (i + 1 < words.Length)
                 {
-                    var nextWord = words[i + 1];
+                    var nextWord = words[i + 1].Split('\n')[0];
                     if (cx + MeasureWord(nextWord, textPaint) > MaxWidth)
                     {
                         cy += lineHeight;
@@ -270,28 +270,65 @@ public class CardTextRenderer
             // Track ability mode (quoted ability text turns blue/red)
             var wordAfterChar2 = wordOriginal.Length > 1 ? wordOriginal.Substring(1) : "";
 
-            if (abilityMode && wordOriginal.StartsWith("\u201C"))
+            if (abilityMode && wordOriginal.StartsWith('"'))
                 quotesCounter++;
-            if (wordAfterChar2.Contains('\u201D'))
+            if (wordAfterChar2.Contains('"'))
             {
                 if (abilityMode)
                 {
-                    quotesCounter -= CountChar(wordAfterChar2, '\u201D');
+                    quotesCounter -= CountChar(wordAfterChar2, '"');
                     if (quotesCounter <= 0)
                         abilityMode = false;
                 }
             }
 
-            // Ability mode detection (simplified from the complex GML logic)
+            // Ability mode detection — ported from draw_card_text.gml
             if (i < words.Length - 1 && i > 0)
             {
                 var nextWord = words[i + 1];
-                if (wordOriginal.StartsWith("LG|__2") || wordOriginal.TrimEnd() == "DLegion")
+
+                if (wordOriginal.StartsWith("LG|__2"))
                     abilityLegionMode = true;
 
-                bool getsAbility = (wordOriginal.TrimEnd() is "gets" or "get" or "gets," or "get," or "loses" or "lose" or "may" or "performs" or "perform")
-                                   && nextWord.StartsWith("\u201C");
-                if (getsAbility)
+                bool nextQuote = nextWord.StartsWith('\"');
+                bool enters =
+                    // gets/get/gets,/get, + quote
+                    (wordOriginal is "gets " or "get " or "gets, " or "get, " && nextQuote) ||
+                    // loses/lose + quote
+                    (wordOriginal is "loses " or "lose " && nextQuote) ||
+                    // pay + quote
+                    (wordOriginal == "pay " && nextQuote) ||
+                    // and + specific quoted keywords
+                    (wordOriginal == "and " && (
+                        nextWord.StartsWith("\"Boost") || nextWord.StartsWith("\"Intercept") ||
+                        nextWord.StartsWith("\"AUTO") || nextWord.StartsWith("\"CONT") ||
+                        nextWord.StartsWith("\"ACT") || nextWord.StartsWith("\"Shadowstitch") ||
+                        nextWord.StartsWith("\"Rescue") || nextWord.StartsWith("\"Time") ||
+                        nextWord.StartsWith("\"Draw"))) ||
+                    // or + quoted CCharg
+                    (wordOriginal == "or " && nextWord.StartsWith("\"CCharg")) ||
+                    // may + quote
+                    (wordOriginal == "may " && nextQuote) ||
+                    // perform/performs + quote
+                    (wordOriginal is "perform " or "performs " && nextQuote) ||
+                    // play (after may) + quote
+                    (wordOriginal == "play " && prevWord == "may" && nextQuote) ||
+                    // of (after instead) + quote
+                    (wordOriginal == "of " && prevWord == "instead" && nextQuote) ||
+                    // with (after paid/ride, or before Boost/Intercept) + quote
+                    (wordOriginal == "with " && (prevWord == "paid" || prevWord == "ride" ||
+                        nextWord.StartsWith("\"Boost") || nextWord.StartsWith("\"Intercept")) && nextQuote) ||
+                    // to (after changes/change/check) + quote
+                    (wordOriginal == "to " && (prevWord == "changes" || prevWord == "change" || prevWord == "check") && nextQuote) ||
+                    // vanguard's/vanguards/Vanguards + quote
+                    (wordOriginal is "vanguard\u2019s " or "vanguards " or "Vanguards " && nextQuote) ||
+                    // trigger quotes: "t_0: / "t_1: / "t_2: / "t_3:
+                    (nextWord.StartsWith("\"t_0:") || nextWord.StartsWith("\"t_1:") ||
+                     nextWord.StartsWith("\"t_2:") || nextWord.StartsWith("\"t_3:")) ||
+                    // legion mode + quote
+                    (abilityLegionMode && nextQuote);
+
+                if (enters)
                 {
                     abilityMode = true;
                     quotesCounter = 0;
@@ -317,7 +354,7 @@ public class CardTextRenderer
         // Cost underline
         if (costMode)
         {
-            float lineY = y + GetLineHeight() - 2;
+            float lineY = y + GetLineHeight();
             using var linePaint = new SKPaint
             {
                 Color = abilityMode ? AbilityModeColor : SKColors.Black,
@@ -440,7 +477,7 @@ public class CardTextRenderer
 
         // Draw colored background rectangle (rounded corners)
         using var bgPaint = new SKPaint { Color = bgColor, IsAntialias = true };
-        canvas.DrawRoundRect(x, y + 1, kwWidth + 2, GetLineHeight() - 2, 2, 2, bgPaint);
+        canvas.DrawRoundRect(x, y + 1, kwWidth + 2, GetLineHeight(), 2, 2, bgPaint);
 
         // Draw keyword in white
         using var kwPaint = new SKPaint
@@ -450,8 +487,7 @@ public class CardTextRenderer
             Typeface = _fontRegular,
             IsAntialias = true,
             SubpixelText = true,
-            HintingLevel = SKPaintHinting.Normal,
-            IsAutohinted = true
+            HintingLevel = SKPaintHinting.Slight
         };
         canvas.DrawText(keyword, x + 1, y + FontSize, kwPaint);
         x += kwWidth + 3;
@@ -478,7 +514,7 @@ public class CardTextRenderer
         // Draw icon
         if (_icons.TryGetValue(iconName, out var bitmap))
         {
-            float scale = GetLineHeight() / bitmap.Height;
+            float scale = 1f;
             float drawWidth = bitmap.Width * scale;
             canvas.DrawBitmap(bitmap, SKRect.Create(x, y, drawWidth, GetLineHeight()));
             x += drawWidth;
@@ -526,7 +562,7 @@ public class CardTextRenderer
 
             if (digits.Length > 0)
             {
-                float circleSize = GetLineHeight() - 4;
+                float circleSize = GetLineHeight() - 2;
                 using var circlePaint = new SKPaint { Color = circleColor, IsAntialias = true };
                 canvas.DrawOval(x + circleSize / 2 + 2, y + GetLineHeight() / 2, circleSize / 2, circleSize / 2, circlePaint);
 
@@ -549,7 +585,12 @@ public class CardTextRenderer
         return paint.MeasureText(word);
     }
 
-    private float GetLineHeight() => FontSize * 1.3f;
+    private float GetLineHeight() => 16f;
+
+    /// <summary>
+    /// In GameMaker 8.1, # is a line break and \# escapes it to a literal #.
+    /// </summary>
+    private static string UnescapeHash(string s) => s.Replace("\\#", "#");
 
     private static int CountChar(string s, char c)
     {
