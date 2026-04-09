@@ -9,15 +9,23 @@ namespace CfaDatabaseEditor.Views;
 
 public partial class MainWindow : Window
 {
+    private static readonly KeyModifiers PlatformCommandKey =
+        OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control;
+
     public MainWindow()
     {
         InitializeComponent();
+
+        OpenMenuItem.HotKey = new KeyGesture(Key.O, PlatformCommandKey);
+        SaveMenuItem.HotKey = new KeyGesture(Key.S, PlatformCommandKey);
+        DuplicateMenuItem.HotKey = new KeyGesture(Key.D, PlatformCommandKey);
+
         KeyDown += OnWindowKeyDown;
     }
 
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.F && e.KeyModifiers == KeyModifiers.Control)
+        if (e.Key == Key.F && e.KeyModifiers == PlatformCommandKey)
         {
             SearchBox.Focus();
             SearchBox.SelectAll();

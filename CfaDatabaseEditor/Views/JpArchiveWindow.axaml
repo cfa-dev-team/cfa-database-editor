@@ -29,7 +29,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <TextBlock Text="Page:" VerticalAlignment="Center"/>
                     <NumericUpDown Value="{Binding Page}" Minimum="1" Maximum="99"
-                                   FormatString="0" Width="80"/>
+                                   FormatString="0" Width="120"/>
                 </StackPanel>
             </DockPanel>
             <TextBlock Text="{Binding ProgressText}" Foreground="Gray"/>
