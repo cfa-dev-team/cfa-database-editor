@@ -78,6 +78,9 @@ public class DatabaseService
         {
             GmlWriter.WriteCardFile(cardFile);
         }
+
+        if (TextPath != null)
+            GmlWriter.UpdateAllCard(TextPath, AllCardValue);
     }
 
     public Card CreateNewCard(string targetFileName)
@@ -103,9 +106,6 @@ public class DatabaseService
 
         AllCards.Add(card);
         AllCards.Sort((a, b) => a.CardStat.CompareTo(b.CardStat));
-
-        if (TextPath != null)
-            GmlWriter.UpdateAllCard(TextPath, AllCardValue);
 
         return card;
     }
