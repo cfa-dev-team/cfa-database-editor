@@ -31,7 +31,7 @@
                 <MenuItem Header="E_xit" Click="OnExitClick"/>
             </MenuItem>
             <MenuItem Header="_Card">
-                <MenuItem Header="_New Card">
+                <MenuItem x:Name="NewCardMenu" Header="_New Card">
                     <MenuItem Header="Cray Elemental (NoClan)" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.CrayElemental}"/>
                     <MenuItem Header="Order Cards" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.OrderFilter}"/>
                     <Separator/>
@@ -45,6 +45,8 @@
                 <MenuItem x:Name="DuplicateMenuItem" Header="_Duplicate" Command="{Binding DuplicateCardCommand}"/>
             </MenuItem>
             <MenuItem Header="_Tools">
+                <MenuItem Header="Custom _Factions..." Click="OnCustomFactionsClick"/>
+                <Separator/>
                 <MenuItem Header="EN Database _Sync..." Click="OnEnSyncClick"/>
                 <MenuItem Header="_JP Card Archive..." Click="OnJpArchiveClick"/>
             </MenuItem>
@@ -143,7 +145,16 @@
                             <TextBlock Text="Core Properties" FontWeight="Bold" FontSize="14"/>
                             <Grid ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Card ID:" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CardStat}" VerticalAlignment="Center" FontWeight="Bold"/>
+                                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                    <NumericUpDown x:Name="CardStatEditor" FormatString="0"
+                                                   Value="{Binding CardStat}"
+                                                   IsEnabled="{Binding IsCustomCard}"
+                                                   Minimum="1" Maximum="31999" Width="160"
+                                                   FontWeight="Bold"/>
+                                    <TextBlock Text="(custom)" FontSize="11" Foreground="#00897B"
+                                               VerticalAlignment="Center"
+                                               IsVisible="{Binding IsCustomCard}"/>
+                                </StackPanel>
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Name:" VerticalAlignment="Center"/>
                                 <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CardName}" x:DataType="m:Card"/>
@@ -162,10 +173,10 @@
                                 <NumericUpDown FormatString="0" Grid.Row="5" Grid.Column="1" Value="{Binding DefensePowerStat}" Minimum="0" Increment="5000" Width="160" HorizontalAlignment="Left"/>
 
                                 <TextBlock Grid.Row="6" Grid.Column="0" Text="Nation:" VerticalAlignment="Center"/>
-                                <NumericUpDown FormatString="0" Grid.Row="6" Grid.Column="1" Value="{Binding DCards}" Minimum="0" Maximum="14" Width="120" HorizontalAlignment="Left"/>
+                                <NumericUpDown FormatString="0" Grid.Row="6" Grid.Column="1" Value="{Binding DCards}" Minimum="0" Maximum="32000" Width="120" HorizontalAlignment="Left"/>
 
                                 <TextBlock Grid.Row="7" Grid.Column="0" Text="Clan:" VerticalAlignment="Center"/>
-                                <NumericUpDown FormatString="0" Grid.Row="7" Grid.Column="1" Value="{Binding CardInClan}" Minimum="0" Maximum="35" Width="120" HorizontalAlignment="Left"/>
+                                <NumericUpDown FormatString="0" Grid.Row="7" Grid.Column="1" Value="{Binding CardInClan}" Minimum="0" Maximum="32000" Width="120" HorizontalAlignment="Left"/>
                             </Grid>
                         </StackPanel>
                     </Border>

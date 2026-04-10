@@ -37,8 +37,8 @@ public partial class MainWindowViewModel : ViewModelBase
     // Card editor - bound to selected card
     [ObservableProperty] private string? _cardImagePath;
 
-    // New card targets
-    public IReadOnlyList<ClanDefinition> NewCardTargets => ClanRegistry.GetFileTargetsForNewCard();
+    // New card targets - refreshed after loading to include custom factions
+    [ObservableProperty] private ObservableCollection<ClanDefinition> _newCardTargets = new();
 
     public DatabaseService Database => _db;
 
@@ -47,16 +47,25 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel()
     {
-        // Populate filter options with reset entries
+        RebuildFilterOptions();
+    }
+
+    public void RebuildFilterOptions()
+    {
+        NationOptions.Clear();
         NationOptions.Add(AllNationsSentinel);
         foreach (var n in ClanRegistry.AllNations.Where(n => n.Era != FactionEra.Other))
             NationOptions.Add(n);
+
+        ClanOptions.Clear();
         ClanOptions.Add(AllClansSentinel);
         foreach (var c in ClanRegistry.AllClans.Where(c => c.Era != FactionEra.Other))
             ClanOptions.Add(c);
 
         SelectedNationFilter = AllNationsSentinel;
         SelectedClanFilter = AllClansSentinel;
+
+        NewCardTargets = new ObservableCollection<ClanDefinition>(ClanRegistry.GetFileTargetsForNewCard());
     }
 
     partial void OnSelectedCardChanged(Card? value)
@@ -89,6 +98,9 @@ public partial class MainWindowViewModel : ViewModelBase
             _allCardsList = new List<Card>(_db.AllCards);
             Program.Log?.WriteLine($"[INFO] Created card list copy");
 
+            // Rebuild filter options to include custom factions
+            RebuildFilterOptions();
+
             IsLoaded = true;
             Program.Log?.WriteLine($"[INFO] Calling ApplyFilters...");
             ApplyFilters();
@@ -114,7 +126,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             // Regenerate MD5 checksums
             if (_db.RootPath != null)
-                await Md5ChecksumGenerator.RegenerateChecksumsAsync(_db.RootPath);
+                await Md5ChecksumGenerator.RegenerateChecksumsAsync(_db.RootPath, _db.BuiltInAllCardValue);
 
             StatusText = "Saved successfully";
         }
@@ -129,7 +141,24 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (!_db.IsLoaded || target.FileName == null) return;
 
-        var card = _db.CreateNewCard(target.FileName);
+        Card card;
+        if (target.IsCustom)
+        {
+            try
+            {
+                card = _db.CreateNewCustomCard(target.FileName);
+            }
+            catch (InvalidOperationException ex)
+            {
+                StatusText = ex.Message;
+                return;
+            }
+        }
+        else
+        {
+            card = _db.CreateNewCard(target.FileName);
+        }
+
         card.CardName = "New Card";
         card.DCards = target.Type == FactionType.Nation ? target.Id : 0;
         if (target.Type == FactionType.Clan)
@@ -147,7 +176,16 @@ public partial class MainWindowViewModel : ViewModelBase
         if (!_db.IsLoaded || SelectedCard == null) return;
 
         var src = SelectedCard;
-        var card = _db.CreateNewCard(src.SourceFile);
+        Card card;
+        if (src.IsCustomCard)
+        {
+            try { card = _db.CreateNewCustomCard(src.SourceFile); }
+            catch (InvalidOperationException ex) { StatusText = ex.Message; return; }
+        }
+        else
+        {
+            card = _db.CreateNewCard(src.SourceFile);
+        }
 
         // Core
         card.CardName = src.CardName;
@@ -315,6 +353,12 @@ public partial class MainWindowViewModel : ViewModelBase
     public void RefreshCardList()
     {
         _allCardsList = new List<Card>(_db.AllCards);
+        ApplyFilters();
+    }
+
+    public void RefreshAfterCustomFactionChange()
+    {
+        RebuildFilterOptions();
         ApplyFilters();
     }
 

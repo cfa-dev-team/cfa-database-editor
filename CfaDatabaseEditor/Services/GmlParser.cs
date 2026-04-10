@@ -409,5 +409,92 @@ public static class GmlParser
         return match.Success ? int.Parse(match.Groups[1].Value) : 0;
     }
 
+    /// <summary>
+    /// Parses Custom Overrides.txt for custom faction definitions and AllCard override.
+    /// Returns null if the file doesn't exist.
+    /// </summary>
+    public static CustomOverridesData? ParseCustomOverrides(string textFolderPath)
+    {
+        var filePath = Path.Combine(textFolderPath, "Custom Overrides.txt");
+        if (!File.Exists(filePath)) return null;
+
+        var lines = File.ReadAllLines(filePath, Win1251);
+        var data = new CustomOverridesData();
+
+        // Temporary dictionaries keyed by index
+        var clanIds = new Dictionary<int, int>();
+        var nationIds = new Dictionary<int, int>();
+        var names = new Dictionary<int, string>();
+        var fileNames = new Dictionary<int, string>();
+
+        var reClanId = new Regex(@"^global\.CustomFactionClanId\[(\d+)\]\s*=\s*(-?\d+)");
+        var reNationId = new Regex(@"^global\.CustomFactionNationId\[(\d+)\]\s*=\s*(-?\d+)");
+        var reName = new Regex(@"^global\.CustomFactionName\[(\d+)\]\s*=\s*'(.+)'");
+        var reFile = new Regex(@"^global\.CustomFactionFile\[(\d+)\]\s*=\s*'(.+)'");
+        var reMaxFaction = new Regex(@"^global\.MaxCustomFaction\s*=\s*(\d+)");
+        var reAllCard = new Regex(@"^global\.AllCard\s*=\s*(\d+)");
+        var reCustomStartId = new Regex(@"^global\.CustomCardStartId\s*=\s*(\d+)");
+
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed) || trimmed.StartsWith("//"))
+            {
+                data.OtherLines.Add(line);
+                continue;
+            }
+
+            Match m;
+            bool matched = false;
+
+            m = reClanId.Match(trimmed);
+            if (m.Success) { clanIds[int.Parse(m.Groups[1].Value)] = int.Parse(m.Groups[2].Value); matched = true; }
+
+            m = reNationId.Match(trimmed);
+            if (m.Success) { nationIds[int.Parse(m.Groups[1].Value)] = int.Parse(m.Groups[2].Value); matched = true; }
+
+            m = reName.Match(trimmed);
+            if (m.Success) { names[int.Parse(m.Groups[1].Value)] = m.Groups[2].Value; matched = true; }
+
+            m = reFile.Match(trimmed);
+            if (m.Success) { fileNames[int.Parse(m.Groups[1].Value)] = m.Groups[2].Value; matched = true; }
+
+            m = reMaxFaction.Match(trimmed);
+            if (m.Success) { data.MaxCustomFaction = int.Parse(m.Groups[1].Value); matched = true; }
+
+            m = reAllCard.Match(trimmed);
+            if (m.Success) { data.AllCardOverride = int.Parse(m.Groups[1].Value); matched = true; }
+
+            m = reCustomStartId.Match(trimmed);
+            if (m.Success) { data.CustomCardStartId = int.Parse(m.Groups[1].Value); matched = true; }
+
+            if (!matched)
+                data.OtherLines.Add(line);
+        }
+
+        // Build faction list from collected data
+        var allIndices = new HashSet<int>();
+        foreach (var k in clanIds.Keys) allIndices.Add(k);
+        foreach (var k in nationIds.Keys) allIndices.Add(k);
+        foreach (var k in names.Keys) allIndices.Add(k);
+        foreach (var k in fileNames.Keys) allIndices.Add(k);
+
+        foreach (var idx in allIndices.OrderBy(i => i))
+        {
+            if (!names.ContainsKey(idx)) continue; // Must have a name at minimum
+
+            data.Factions.Add(new CustomFactionData
+            {
+                Index = idx,
+                ClanId = clanIds.GetValueOrDefault(idx, 0),
+                NationId = nationIds.GetValueOrDefault(idx, -1),
+                Name = names.GetValueOrDefault(idx, ""),
+                FileName = fileNames.GetValueOrDefault(idx, "")
+            });
+        }
+
+        return data;
+    }
+
     public static Encoding GetEncoding() => Win1251;
 }

@@ -217,6 +217,7 @@ public class Card : INotifyPropertyChanged
     public int SourceLineStart { get; set; }
     public int SourceLineEnd { get; set; }
     public bool IsModified { get; set; }
+    public bool IsCustomCard { get; set; }
 
     public string DisplayName => $"[{CardStat}] {CardName}";
 }

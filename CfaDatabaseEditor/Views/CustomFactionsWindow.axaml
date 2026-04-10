@@ -1,0 +1,86 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="using:CfaDatabaseEditor.Views"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
+        x:Class="CfaDatabaseEditor.Views.CustomFactionsWindow"
+        Title="Custom Factions"
+        Width="620" Height="520"
+        MinWidth="500" MinHeight="400"
+        WindowStartupLocation="CenterOwner">
+
+    <DockPanel Margin="12">
+        <!-- Header -->
+        <TextBlock DockPanel.Dock="Top" Text="Custom Clans &amp; Nations" FontWeight="Bold" FontSize="16" Margin="0,0,0,4"/>
+        <TextBlock DockPanel.Dock="Top" Text="Manage custom factions stored in Custom Overrides.txt. Use IDs 100+ for factions, 20000+ for cards."
+                   Foreground="Gray" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+        <!-- Buttons at bottom -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
+            <Button x:Name="CloseButton" Content="Close" Width="80" Click="OnCloseClick"/>
+        </StackPanel>
+
+        <!-- Main content -->
+        <Grid RowDefinitions="*,Auto,Auto">
+            <!-- Faction list -->
+            <Border Grid.Row="0" BorderBrush="#DDD" BorderThickness="1" CornerRadius="4">
+                <ListBox x:Name="FactionList" SelectionChanged="OnFactionSelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="v:FactionListItem">
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding FileName}" Foreground="Gray" FontSize="11" Margin="8,0,0,0"/>
+                                <TextBlock>
+                                    <Run Text="[" Foreground="Gray"/><Run Text="{Binding TypeLabel}" Foreground="#00897B" FontWeight="Bold"/><Run Text="] " Foreground="Gray"/>
+                                    <Run Text="{Binding Name}"/>
+                                    <Run Text=" (ID:" Foreground="Gray"/><Run Text="{Binding DisplayId}" Foreground="Gray"/><Run Text=")" Foreground="Gray"/>
+                                </TextBlock>
+                            </DockPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <!-- List action buttons -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                <Button x:Name="AddButton" Content="Add Faction" Click="OnAddClick"/>
+                <Button x:Name="RemoveButton" Content="Remove" Click="OnRemoveClick" IsEnabled="False"/>
+            </StackPanel>
+
+            <!-- Add/Edit form -->
+            <Border Grid.Row="2" Background="#F8F8F8" CornerRadius="4" Padding="12" Margin="0,8,0,0"
+                    BorderBrush="#DDD" BorderThickness="1"
+                    x:Name="EditPanel" IsVisible="False">
+                <StackPanel Spacing="6">
+                    <TextBlock x:Name="FormTitle" Text="Add Custom Faction" FontWeight="Bold"/>
+                    <Grid ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" x:Name="NameBox" Watermark="My Custom Faction"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Row="1" Grid.Column="1" x:Name="TypeCombo" SelectedIndex="0" Width="150" HorizontalAlignment="Left"
+                                  SelectionChanged="OnTypeComboChanged">
+                            <ComboBoxItem Content="Nation"/>
+                            <ComboBoxItem Content="Clan"/>
+                        </ComboBox>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Faction ID:" VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Row="2" Grid.Column="1" x:Name="FactionIdBox" FormatString="0"
+                                       Value="100" Minimum="1" Maximum="32000" Width="120" HorizontalAlignment="Left"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" x:Name="ParentLabel" Text="Parent Nation:" VerticalAlignment="Center" IsVisible="False"/>
+                        <NumericUpDown Grid.Row="3" Grid.Column="1" x:Name="ParentNationBox" FormatString="0"
+                                       Value="-1" Minimum="-1" Maximum="32000" Width="120" HorizontalAlignment="Left" IsVisible="False"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="File Name:" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="4" Grid.Column="1" x:Name="FileNameBox" Watermark="My Faction.txt"/>
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                        <Button Content="Save" Click="OnSaveEntryClick"/>
+                        <Button Content="Cancel" Click="OnCancelEntryClick"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>
