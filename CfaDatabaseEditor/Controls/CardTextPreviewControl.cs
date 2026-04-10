@@ -107,25 +107,6 @@ public class CardTextPreviewControl : Control
 
     private void TryLoadResources()
     {
-        var exePath = AppDomain.CurrentDomain.BaseDirectory;
-        var assetsPath = Path.Combine(exePath, "Assets");
-
-        if (!Directory.Exists(Path.Combine(assetsPath, "Icons")))
-        {
-            var dir = new DirectoryInfo(exePath);
-            while (dir != null)
-            {
-                var candidate = Path.Combine(dir.FullName, "Assets");
-                if (Directory.Exists(Path.Combine(candidate, "Icons")))
-                {
-                    assetsPath = candidate;
-                    break;
-                }
-                dir = dir.Parent;
-            }
-        }
-
-        if (Directory.Exists(assetsPath))
-            _renderer.LoadResources(assetsPath);
+        _renderer.LoadResources();
     }
 }

@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Platform;
 using Avalonia.Platform.Storage;
 using SkiaSharp;
 
@@ -44,18 +45,40 @@ public class CardTextRenderer
 
     public bool IsLoaded => _fontRegular != null;
 
-    public void LoadResources(string assetsPath)
+    public void LoadResources(string? assetsPath = null)
     {
-        // Load icons
-        var iconsPath = Path.Combine(assetsPath, "Icons");
-        if (Directory.Exists(iconsPath))
+        // Try loading icons from embedded Avalonia resources first
+        var iconsBaseUri = new Uri("avares://CfaDatabaseEditor/Assets/Icons");
+        try
         {
-            foreach (var file in Directory.GetFiles(iconsPath, "*.png"))
+            foreach (var assetUri in AssetLoader.GetAssets(iconsBaseUri, null))
             {
-                var name = Path.GetFileNameWithoutExtension(file);
-                var bitmap = SKBitmap.Decode(file);
+                var path = assetUri.AbsolutePath;
+                if (!path.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) continue;
+
+                var name = Path.GetFileNameWithoutExtension(path);
+                using var stream = AssetLoader.Open(assetUri);
+                var bitmap = SKBitmap.Decode(stream);
                 if (bitmap != null)
                     _icons[name] = bitmap;
+            }
+        }
+        catch
+        {
+            // Fall back to filesystem loading
+            if (assetsPath != null)
+            {
+                var iconsPath = Path.Combine(assetsPath, "Icons");
+                if (Directory.Exists(iconsPath))
+                {
+                    foreach (var file in Directory.GetFiles(iconsPath, "*.png"))
+                    {
+                        var name = Path.GetFileNameWithoutExtension(file);
+                        var bitmap = SKBitmap.Decode(file);
+                        if (bitmap != null)
+                            _icons[name] = bitmap;
+                    }
+                }
             }
         }
 
