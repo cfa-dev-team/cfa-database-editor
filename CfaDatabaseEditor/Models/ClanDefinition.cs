@@ -15,7 +15,8 @@ public enum FactionEra
     Standard,
     VPremium,
     Crossover,
-    Other
+    Other,
+    Custom
 }
 
 public class ClanDefinition
@@ -27,6 +28,8 @@ public class ClanDefinition
     public int? ParentNationId { get; init; }
     public Color DisplayColor { get; init; }
     public string? FileName { get; init; }
+    public bool IsCustom { get; init; }
+    public int CustomIndex { get; init; }  // Array index in Custom Overrides.txt (100+)
 
     public override string ToString() => Name;
 }
@@ -115,19 +118,28 @@ public static class ClanRegistry
     private static readonly Dictionary<int, ClanDefinition> _nationsById = new();
     private static readonly Dictionary<int, ClanDefinition> _clansById = new();
 
-    public static IReadOnlyList<ClanDefinition> AllNations { get; }
-    public static IReadOnlyList<ClanDefinition> AllClans { get; }
-    public static IReadOnlyList<ClanDefinition> All { get; }
+    private static readonly Color CustomNationColor = Color.Parse("#00897B");
+    private static readonly Color CustomClanColor = Color.Parse("#26A69A");
+
+    private static readonly List<ClanDefinition> _builtInNations;
+    private static readonly List<ClanDefinition> _builtInClans;
+    private static readonly List<ClanDefinition> _customNations = new();
+    private static readonly List<ClanDefinition> _customClans = new();
+
+    public static IReadOnlyList<ClanDefinition> AllNations { get; private set; }
+    public static IReadOnlyList<ClanDefinition> AllClans { get; private set; }
+    public static IReadOnlyList<ClanDefinition> All { get; private set; }
+    public static IReadOnlyList<ClanDefinition> CustomFactions => _customNations.Concat(_customClans).ToList();
 
     static ClanRegistry()
     {
-        AllNations = new List<ClanDefinition>
+        _builtInNations = new List<ClanDefinition>
         {
             DragonEmpire, DarkStates, KeterSanctuary, Stoicheia, BrandtGate, LyricalMonasterio,
             MonsterStrike, TechnicalNation, ShamanKing, RecordOfRagnarok, IronArmor, Vspo, CoroCoro, Buddyfight
         };
 
-        AllClans = new List<ClanDefinition>
+        _builtInClans = new List<ClanDefinition>
         {
             // Dragon Empire clans
             Kagero, Tachikaze, Narukami, Murakumo, Nubatama,
@@ -147,12 +159,50 @@ public static class ClanRegistry
             Game, Animation, Iconic, LiveAction
         };
 
+        AllNations = _builtInNations.ToList();
+        AllClans = _builtInClans.ToList();
         All = AllNations.Concat(AllClans).ToList();
 
+        RebuildLookups();
+    }
+
+    private static void RebuildLookups()
+    {
+        _nationsById.Clear();
+        _clansById.Clear();
         foreach (var n in AllNations)
             _nationsById[n.Id] = n;
         foreach (var c in AllClans)
             _clansById[c.Id] = c;
+    }
+
+    public static void RegisterCustomFactions(IEnumerable<ClanDefinition> factions)
+    {
+        _customNations.Clear();
+        _customClans.Clear();
+
+        foreach (var f in factions)
+        {
+            if (f.Type == FactionType.Nation)
+                _customNations.Add(f);
+            else
+                _customClans.Add(f);
+        }
+
+        AllNations = _builtInNations.Concat(_customNations).ToList();
+        AllClans = _builtInClans.Concat(_customClans).ToList();
+        All = AllNations.Concat(AllClans).ToList();
+        RebuildLookups();
+    }
+
+    public static void ClearCustomFactions()
+    {
+        _customNations.Clear();
+        _customClans.Clear();
+        AllNations = _builtInNations.ToList();
+        AllClans = _builtInClans.ToList();
+        All = AllNations.Concat(AllClans).ToList();
+        RebuildLookups();
     }
 
     public static ClanDefinition? GetNationById(int id) =>
@@ -163,7 +213,7 @@ public static class ClanRegistry
 
     /// <summary>
     /// Gets files available for adding new cards, grouped and ordered per requirements:
-    /// NoClan first, then 6 Standard Nations, then Other Nations, then V/G Clans.
+    /// NoClan first, then 6 Standard Nations, then Other Nations, then V/G Clans, then Custom.
     /// </summary>
     public static IReadOnlyList<ClanDefinition> GetFileTargetsForNewCard()
     {
@@ -200,6 +250,15 @@ public static class ClanRegistry
         result.Add(Iconic);
         result.Add(LiveAction);
 
+        // Custom factions
+        foreach (var f in _customNations)
+            result.Add(f);
+        foreach (var f in _customClans)
+            result.Add(f);
+
         return result;
     }
+
+    public static Color GetCustomNationColor() => CustomNationColor;
+    public static Color GetCustomClanColor() => CustomClanColor;
 }

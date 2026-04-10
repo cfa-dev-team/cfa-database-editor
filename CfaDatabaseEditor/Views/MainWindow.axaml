@@ -9,7 +9,8 @@
         mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="800"
         x:Class="CfaDatabaseEditor.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="CFA Database Editor v1.0.0 beta"
+        Title="CFA Database Editor v1.1.0 beta"
+        Icon="avares://CfaDatabaseEditor/Assets/CFADBE.ico"
         Width="1400" Height="850"
         MinWidth="900" MinHeight="600">
 
@@ -24,16 +25,14 @@
         <!-- Menu Bar -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem Header="_Open Database..." Click="OnOpenDatabaseClick"
-                          HotKey="Ctrl+O"/>
-                <MenuItem Header="_Save All"
-                          Command="{Binding SaveCommand}"
-                          HotKey="Ctrl+S"/>
+                <MenuItem x:Name="OpenMenuItem" Header="_Open Database..." Click="OnOpenDatabaseClick"/>
+                <MenuItem x:Name="SaveMenuItem" Header="_Save All"
+                          Command="{Binding SaveCommand}"/>
                 <Separator/>
                 <MenuItem Header="E_xit" Click="OnExitClick"/>
             </MenuItem>
             <MenuItem Header="_Card">
-                <MenuItem Header="_New Card">
+                <MenuItem x:Name="NewCardMenu" Header="_New Card">
                     <MenuItem Header="Cray Elemental (NoClan)" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.CrayElemental}"/>
                     <MenuItem Header="Order Cards" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.OrderFilter}"/>
                     <Separator/>
@@ -44,11 +43,13 @@
                     <MenuItem Header="Brandt Gate" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.BrandtGate}"/>
                     <MenuItem Header="Lyrical Monasterio" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.LyricalMonasterio}"/>
                 </MenuItem>
-                <MenuItem Header="_Duplicate" Command="{Binding DuplicateCardCommand}"
-                          HotKey="Ctrl+D"/>
+                <MenuItem x:Name="DuplicateMenuItem" Header="_Duplicate" Command="{Binding DuplicateCardCommand}"/>
             </MenuItem>
             <MenuItem Header="_Tools">
+                <MenuItem Header="Custom _Factions..." Click="OnCustomFactionsClick"/>
+                <Separator/>
                 <MenuItem Header="EN Database _Sync..." Click="OnEnSyncClick"/>
+                <MenuItem Header="_JP Card Archive..." Click="OnJpArchiveClick"/>
             </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem Header="_About" Click="OnAboutClick"/>
@@ -145,7 +146,16 @@
                             <TextBlock Text="Core Properties" FontWeight="Bold" FontSize="14"/>
                             <Grid ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Card ID:" VerticalAlignment="Center"/>
-                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CardStat}" VerticalAlignment="Center" FontWeight="Bold"/>
+                                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                    <NumericUpDown x:Name="CardStatEditor" FormatString="0"
+                                                   Value="{Binding CardStat}"
+                                                   IsEnabled="{Binding IsCustomCard}"
+                                                   Minimum="1" Maximum="31999" Width="160"
+                                                   FontWeight="Bold"/>
+                                    <TextBlock Text="(custom)" FontSize="11" Foreground="#00897B"
+                                               VerticalAlignment="Center"
+                                               IsVisible="{Binding IsCustomCard}"/>
+                                </StackPanel>
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Name:" VerticalAlignment="Center"/>
                                 <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding CardName}" x:DataType="m:Card"/>
@@ -164,11 +174,24 @@
                                 <NumericUpDown FormatString="0" Grid.Row="5" Grid.Column="1" Value="{Binding DefensePowerStat}" Minimum="0" Increment="5000" Width="160" HorizontalAlignment="Left"/>
 
                                 <TextBlock Grid.Row="6" Grid.Column="0" Text="Nation:" VerticalAlignment="Center"/>
-                                <NumericUpDown FormatString="0" Grid.Row="6" Grid.Column="1" Value="{Binding DCards}" Minimum="0" Maximum="14" Width="120" HorizontalAlignment="Left"/>
+                                <NumericUpDown FormatString="0" Grid.Row="6" Grid.Column="1" Value="{Binding DCards}" Minimum="0" Maximum="32000" Width="120" HorizontalAlignment="Left"/>
 
                                 <TextBlock Grid.Row="7" Grid.Column="0" Text="Clan:" VerticalAlignment="Center"/>
-                                <NumericUpDown FormatString="0" Grid.Row="7" Grid.Column="1" Value="{Binding CardInClan}" Minimum="0" Maximum="35" Width="120" HorizontalAlignment="Left"/>
+                                <NumericUpDown FormatString="0" Grid.Row="7" Grid.Column="1" Value="{Binding CardInClan}" Minimum="0" Maximum="32000" Width="120" HorizontalAlignment="Left"/>
                             </Grid>
+                            <StackPanel Orientation="Horizontal" Spacing="8"
+                                        IsVisible="{Binding DataContext.DuplicateNameWarning,
+                                            RelativeSource={RelativeSource AncestorType=Window},
+                                            Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                <TextBlock Text="{Binding DataContext.DuplicateNameWarning,
+                                               RelativeSource={RelativeSource AncestorType=Window}}"
+                                           Foreground="#E65100" FontSize="11" TextWrapping="Wrap"
+                                           VerticalAlignment="Center"/>
+                                <Button Content="Fix" FontSize="11" Padding="8,2"
+                                        Command="{Binding DataContext.FixDuplicateNameCommand,
+                                            RelativeSource={RelativeSource AncestorType=Window}}"
+                                        VerticalAlignment="Center"/>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 
@@ -430,24 +453,27 @@
             <GridSplitter Grid.Column="3" Width="4" ResizeDirection="Columns"/>
 
             <!-- RIGHT: Preview Panel -->
-            <DockPanel Grid.Column="4" Margin="4">
-                <!-- Card Image -->
-                <Border DockPanel.Dock="Top" Background="#333" CornerRadius="4"
-                        Height="440" Margin="0,0,0,4">
-                    <Image Source="{Binding CardImagePath, Converter={StaticResource PathToBitmap}}"
-                           Stretch="Uniform"
-                           StretchDirection="DownOnly"/>
-                </Border>
+            <Grid Grid.Column="4" Margin="4" RowDefinitions="440,4,*">
+                <!-- Card Image + Actions -->
+                <DockPanel Grid.Row="0" MinHeight="100">
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
+                        <Button Content="Replace Image"
+                                Click="OnReplaceImageClick"
+                                HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                    <Border Background="#333" CornerRadius="4">
+                        <Image Source="{Binding CardImagePath, Converter={StaticResource PathToBitmap}}"
+                               Stretch="Uniform"
+                               StretchDirection="DownOnly"/>
+                    </Border>
+                </DockPanel>
 
-                <!-- Image Actions -->
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
-                    <Button Content="Replace Image"
-                            Click="OnReplaceImageClick"
-                            HorizontalAlignment="Stretch"/>
-                </StackPanel>
+                <GridSplitter Grid.Row="1" Height="4" ResizeDirection="Rows"
+                              HorizontalAlignment="Stretch"
+                              Background="Transparent"/>
 
                 <!-- In-Game Text Preview -->
-                <Border Background="#FFF" CornerRadius="4" BorderBrush="#DDD" BorderThickness="1">
+                <Border Grid.Row="2" Background="#FFF" CornerRadius="4" BorderBrush="#DDD" BorderThickness="1">
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Top" Text="In-Game Text Preview (Reference-Only!)"
                                    FontWeight="Bold" FontSize="12" Margin="8,4,8,2"/>
@@ -463,7 +489,7 @@
                         </ScrollViewer>
                     </DockPanel>
                 </Border>
-            </DockPanel>
+            </Grid>
 
         </Grid>
     </DockPanel>

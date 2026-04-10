@@ -182,7 +182,8 @@ public class Card : INotifyPropertyChanged
     public string? TokenSummoner2Button3 { get; set; }
 
     // === Search Effect ===
-    public bool SearchEffect { get; set; }
+    private bool _searchEffect;
+    public bool SearchEffect { get => _searchEffect; set => Set(ref _searchEffect, value); }
     public string? SearchEffectPosition { get; set; }
     public int? SearchEffectLookAtQuantity { get; set; }
     public string? SearchEffectMode { get; set; }
@@ -216,6 +217,7 @@ public class Card : INotifyPropertyChanged
     public int SourceLineStart { get; set; }
     public int SourceLineEnd { get; set; }
     public bool IsModified { get; set; }
+    public bool IsCustomCard { get; set; }
 
     public string DisplayName => $"[{CardStat}] {CardName}";
 }

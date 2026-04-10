@@ -36,9 +36,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
     // Card editor - bound to selected card
     [ObservableProperty] private string? _cardImagePath;
+    [ObservableProperty] private string _duplicateNameWarning = string.Empty;
 
-    // New card targets
-    public IReadOnlyList<ClanDefinition> NewCardTargets => ClanRegistry.GetFileTargetsForNewCard();
+    // New card targets - refreshed after loading to include custom factions
+    [ObservableProperty] private ObservableCollection<ClanDefinition> _newCardTargets = new();
 
     public DatabaseService Database => _db;
 
@@ -47,24 +48,86 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel()
     {
-        // Populate filter options with reset entries
+        RebuildFilterOptions();
+    }
+
+    public void RebuildFilterOptions()
+    {
+        NationOptions.Clear();
         NationOptions.Add(AllNationsSentinel);
         foreach (var n in ClanRegistry.AllNations.Where(n => n.Era != FactionEra.Other))
             NationOptions.Add(n);
+
+        ClanOptions.Clear();
         ClanOptions.Add(AllClansSentinel);
         foreach (var c in ClanRegistry.AllClans.Where(c => c.Era != FactionEra.Other))
             ClanOptions.Add(c);
 
         SelectedNationFilter = AllNationsSentinel;
         SelectedClanFilter = AllClansSentinel;
+
+        NewCardTargets = new ObservableCollection<ClanDefinition>(ClanRegistry.GetFileTargetsForNewCard());
     }
+
+    private Card? _subscribedCard;
 
     partial void OnSelectedCardChanged(Card? value)
     {
+        if (_subscribedCard != null)
+            _subscribedCard.PropertyChanged -= OnSelectedCardPropertyChanged;
+
+        _subscribedCard = value;
+
         if (value != null)
+        {
+            value.PropertyChanged += OnSelectedCardPropertyChanged;
             CardImagePath = _db.GetCardImagePath(value.CardStat);
+            CheckDuplicateName();
+        }
         else
+        {
             CardImagePath = null;
+            DuplicateNameWarning = string.Empty;
+        }
+    }
+
+    private void OnSelectedCardPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Card.CardName))
+            CheckDuplicateName();
+    }
+
+    private void CheckDuplicateName()
+    {
+        if (SelectedCard == null || string.IsNullOrEmpty(SelectedCard.CardName))
+        {
+            DuplicateNameWarning = string.Empty;
+            return;
+        }
+
+        var duplicate = _allCardsList.FirstOrDefault(c =>
+            c != SelectedCard && c.CardName == SelectedCard.CardName);
+
+        DuplicateNameWarning = duplicate != null
+            ? $"Duplicate name! Card #{duplicate.CardStat} has the same name. CFA requires unique card names."
+            : string.Empty;
+    }
+
+    [RelayCommand]
+    private void FixDuplicateName()
+    {
+        if (SelectedCard == null) return;
+
+        var name = SelectedCard.CardName + " ";
+        var names = new HashSet<string>(_allCardsList
+            .Where(c => c != SelectedCard)
+            .Select(c => c.CardName));
+
+        while (names.Contains(name))
+            name += " ";
+
+        SelectedCard.CardName = name;
+        MarkCardModified();
     }
 
     partial void OnSearchTextChanged(string value) => ApplyFilters();
@@ -88,6 +151,9 @@ public partial class MainWindowViewModel : ViewModelBase
             _imageService = new ImageService(_db);
             _allCardsList = new List<Card>(_db.AllCards);
             Program.Log?.WriteLine($"[INFO] Created card list copy");
+
+            // Rebuild filter options to include custom factions
+            RebuildFilterOptions();
 
             IsLoaded = true;
             Program.Log?.WriteLine($"[INFO] Calling ApplyFilters...");
@@ -114,7 +180,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             // Regenerate MD5 checksums
             if (_db.RootPath != null)
-                await Md5ChecksumGenerator.RegenerateChecksumsAsync(_db.RootPath);
+                await Md5ChecksumGenerator.RegenerateChecksumsAsync(_db.RootPath, _db.BuiltInAllCardValue);
 
             StatusText = "Saved successfully";
         }
@@ -129,7 +195,24 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (!_db.IsLoaded || target.FileName == null) return;
 
-        var card = _db.CreateNewCard(target.FileName);
+        Card card;
+        if (target.IsCustom)
+        {
+            try
+            {
+                card = _db.CreateNewCustomCard(target.FileName);
+            }
+            catch (InvalidOperationException ex)
+            {
+                StatusText = ex.Message;
+                return;
+            }
+        }
+        else
+        {
+            card = _db.CreateNewCard(target.FileName);
+        }
+
         card.CardName = "New Card";
         card.DCards = target.Type == FactionType.Nation ? target.Id : 0;
         if (target.Type == FactionType.Clan)
@@ -147,7 +230,16 @@ public partial class MainWindowViewModel : ViewModelBase
         if (!_db.IsLoaded || SelectedCard == null) return;
 
         var src = SelectedCard;
-        var card = _db.CreateNewCard(src.SourceFile);
+        Card card;
+        if (src.IsCustomCard)
+        {
+            try { card = _db.CreateNewCustomCard(src.SourceFile); }
+            catch (InvalidOperationException ex) { StatusText = ex.Message; return; }
+        }
+        else
+        {
+            card = _db.CreateNewCard(src.SourceFile);
+        }
 
         // Core
         card.CardName = src.CardName;
@@ -310,6 +402,18 @@ public partial class MainWindowViewModel : ViewModelBase
 
         var modCount = _db.GetModifiedFileCount();
         StatusText = $"{_db.AllCards.Count} cards loaded | {modCount} file(s) modified";
+    }
+
+    public void RefreshCardList()
+    {
+        _allCardsList = new List<Card>(_db.AllCards);
+        ApplyFilters();
+    }
+
+    public void RefreshAfterCustomFactionChange()
+    {
+        RebuildFilterOptions();
+        ApplyFilters();
     }
 
     private void ApplyFilters()

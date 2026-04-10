@@ -1,0 +1,113 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:CfaDatabaseEditor.ViewModels"
+        xmlns:m="using:CfaDatabaseEditor.Models"
+        xmlns:conv="using:CfaDatabaseEditor.Converters"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="750"
+        x:Class="CfaDatabaseEditor.Views.JpArchiveWindow"
+        x:DataType="vm:JpArchiveViewModel"
+        Title="JP Card Archive - Add New Cards"
+        Width="1100" Height="780"
+        MinWidth="800" MinHeight="550">
+
+    <Window.Resources>
+        <conv:BytesToBitmapConverter x:Key="BytesToBitmap"/>
+        <conv:ColorToBrushConverter x:Key="ColorToBrushConv"/>
+    </Window.Resources>
+
+    <DockPanel Margin="8">
+        <!-- Top: Page input and scrape controls -->
+        <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,8">
+            <TextBlock Text="Scrape card images from the JP Today's Card archive:" FontWeight="Bold"/>
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4">
+                    <Button Content="Scrape" Command="{Binding ScrapeCommand}"/>
+                    <Button Content="Stop" Command="{Binding StopCommand}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Page:" VerticalAlignment="Center"/>
+                    <NumericUpDown Value="{Binding Page}" Minimum="1" Maximum="99"
+                                   FormatString="0" Width="120"/>
+                </StackPanel>
+            </DockPanel>
+            <TextBlock Text="{Binding ProgressText}" Foreground="Gray"/>
+        </StackPanel>
+
+        <!-- Bottom: Action buttons -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="8" Margin="0,8,0,0"
+                    HorizontalAlignment="Right">
+            <Button Content="Select All" Command="{Binding SelectAllCommand}"/>
+            <Button Content="Deselect All" Command="{Binding DeselectAllCommand}"/>
+            <Separator Width="1" Margin="4,0"/>
+            <Button Content="Apply Selected" Click="OnApplyClick" FontWeight="Bold"/>
+            <Button Content="Close" Click="OnCloseClick"/>
+        </StackPanel>
+
+        <!-- Image Gallery -->
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Cards}" x:CompileBindings="False">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="m:JpArchiveCard">
+                        <Border Margin="4" Padding="6" CornerRadius="4"
+                                BorderBrush="#CCC" BorderThickness="1"
+                                Background="#F8F8F8" Width="220">
+                            <StackPanel Spacing="4">
+                                <!-- Card Image -->
+                                <Border Background="#333" CornerRadius="4" Height="300">
+                                    <Image Source="{Binding ImageData, Converter={StaticResource BytesToBitmap}}"
+                                           Stretch="Uniform" StretchDirection="DownOnly"/>
+                                </Border>
+
+                                <!-- Card Name -->
+                                <TextBox Text="{Binding CardName, Mode=TwoWay}"
+                                         Watermark="Card name..." FontSize="12"/>
+
+                                <!-- Nation Dropdown -->
+                                <ComboBox ItemsSource="{Binding DataContext.NationOptions, RelativeSource={RelativeSource AncestorType=Window}}"
+                                          SelectedItem="{Binding SelectedNation, Mode=TwoWay}"
+                                          HorizontalAlignment="Stretch" FontSize="12">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:DataType="m:ClanDefinition">
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <Border Width="10" Height="10" CornerRadius="2"
+                                                        Background="{Binding DisplayColor, Converter={StaticResource ColorToBrushConv}}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="12"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+
+                                <!-- Clan Dropdown -->
+                                <ComboBox ItemsSource="{Binding DataContext.ClanOptions, RelativeSource={RelativeSource AncestorType=Window}}"
+                                          SelectedItem="{Binding SelectedClan, Mode=TwoWay}"
+                                          HorizontalAlignment="Stretch" FontSize="12">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:DataType="m:ClanDefinition">
+                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                <Border Width="10" Height="10" CornerRadius="2"
+                                                        Background="{Binding DisplayColor, Converter={StaticResource ColorToBrushConv}}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="12"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+
+                                <!-- Select Checkbox -->
+                                <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                          Content="Add this card" FontSize="12"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

@@ -290,4 +290,51 @@ public static class GmlWriter
             $"global.AllCard = {newValue}");
         File.WriteAllText(noUsePath, content, encoding);
     }
+
+    /// <summary>
+    /// Writes custom faction definitions to Custom Overrides.txt.
+    /// Preserves non-faction lines from the original file.
+    /// </summary>
+    public static void WriteCustomOverrides(string textFolderPath, CustomOverridesData data)
+    {
+        var encoding = GmlParser.GetEncoding();
+        var filePath = Path.Combine(textFolderPath, "Custom Overrides.txt");
+
+        var sb = new StringBuilder();
+
+        // Write preserved non-faction lines first
+        foreach (var line in data.OtherLines)
+            sb.AppendLine(line);
+
+        // Add a blank line separator if there were other lines
+        if (data.OtherLines.Count > 0 && data.Factions.Count > 0)
+            sb.AppendLine();
+
+        // Write faction definitions
+        foreach (var f in data.Factions.OrderBy(f => f.Index))
+        {
+            sb.AppendLine($"global.CustomFactionClanId[{f.Index}] = {f.ClanId}");
+            sb.AppendLine($"global.CustomFactionNationId[{f.Index}] = {f.NationId}");
+            sb.AppendLine($"global.CustomFactionName[{f.Index}] = '{f.Name}'");
+            sb.AppendLine($"global.CustomFactionFile[{f.Index}] = '{f.FileName}'");
+            sb.AppendLine();
+        }
+
+        // Write MaxCustomFaction
+        if (data.Factions.Count > 0)
+        {
+            var maxIndex = data.Factions.Max(f => f.Index);
+            sb.AppendLine($"global.MaxCustomFaction = {maxIndex + 1}");
+        }
+
+        // Write CustomCardStartId (editor-managed, ignored by CFA engine)
+        if (data.CustomCardStartId.HasValue)
+            sb.AppendLine($"global.CustomCardStartId = {data.CustomCardStartId.Value}");
+
+        // Write AllCard override if present
+        if (data.AllCardOverride.HasValue)
+            sb.AppendLine($"global.AllCard = {data.AllCardOverride.Value}");
+
+        File.WriteAllText(filePath, sb.ToString(), encoding);
+    }
 }
