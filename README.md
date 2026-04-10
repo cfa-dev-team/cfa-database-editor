@@ -7,12 +7,15 @@ Desktop application for editing the [CFA (Cardfight!! Area)](https://github.com/
 ## Features
 
 - **Card Editor** - Edit all card properties (name, text, grade, power, shield, nation, clan, triggers, persona ride, token generators, search effects, arms, legality, and 50+ more fields)
-- **Card List** - Browse all 15,000+ cards with search (by name, text, or ID) and filtering (by nation, clan, or absence of)
+- **Card List** - Browse all 15,000+ cards with search (by name, text, or ID) and filtering (by nation, clan, grade, or absence of nation/clan)
+- **Custom Clans & Nations** - Full support for CFA's custom factions system. Create and manage custom clans/nations via a visual dialog, add cards to them with smart ID allocation (configurable start ID, max 31999), and edit custom card IDs. Reads and writes `Custom Overrides.txt` automatically
+- **Duplicate Name Detection** - Warns when a card name is already used by another card (CFA engine limitation) with a one-click fix that appends trailing spaces
 - **Image Management** - View card images, replace/add images with automatic resizing to 300px (CardSprite) and 75px (CardSpriteMini2) JPEG
 - **In-Game Text Preview** - Live preview of card text rendered with the CFA client's icon and formatting pipeline
 - **EN Database Sync** - Scrape official English card data from en.cf-vanguard.com, match to CFA cards by artwork similarity (perceptual hashing), and update names/images
-- **MD5 Checksums** - Automatic regeneration of `.md5sums` files on save
-- **Windows-1251 Encoding** - Full support for the CFA database's encoding, with automatic apostrophe sanitization on save
+- **JP Card Archive** - Scrape card images from the JP "Today's Card" archive and bulk-import them as new cards with nation/clan assignment
+- **MD5 Checksums** - Automatic regeneration of `.md5sums` files on save (custom card images are excluded)
+- **Windows-1251 Encoding** - Full support for the CFA database's encoding, with automatic apostrophe sanitization on save and encoding issue warnings
 
 ## Prerequisites
 
@@ -70,7 +73,18 @@ Click `File` -> `Open Database...` to open the folder containing CFA database.
 
 ### Adding New Cards
 
-Use **Card > New Card** in the menu and select the target file. The editor will auto-assign the next CardStat number and update `global.AllCard` in NoUse.txt.
+Use **Card > New Card** in the menu and select the target file. The editor will auto-assign the next CardStat number and update `global.AllCard` in NoUse.txt. Custom faction targets also appear in this menu when custom factions are defined.
+
+### Custom Clans & Nations
+
+Open **Tools > Custom Factions...** to manage custom clans and nations. The editor reads and writes `Custom Overrides.txt` in the `Text/` folder.
+
+- **Adding factions** — When adding the first custom faction, you'll be prompted for a starting card ID (default 25000). New cards are assigned IDs from this value up to 31999.
+- **Faction types** — Custom nations use their ID in the `DCards` field; custom clans use their ID in `CardInClan`. Use faction IDs 100+ to avoid conflicts with built-in factions.
+- **Editable card IDs** — Custom cards have editable Card IDs in the editor (validated for uniqueness).
+- **File names** — Each faction maps to a `.txt` file in the `Text/` folder. Subfolder paths are supported (e.g. `MyFolder/Custom Clan.txt`).
+
+On save, the editor writes faction definitions, `global.MaxCustomFaction`, `global.CustomCardStartId`, and `global.AllCard` to `Custom Overrides.txt`. Other lines in the file are preserved.
 
 ### EN Database Sync
 
@@ -91,11 +105,12 @@ Select a card, then click **Replace Image** in the right panel. The image is aut
 ```
 CfaDatabaseEditor/
   CfaDatabaseEditor/
-    Models/          Card data model, clan/nation registry
+    Models/          Card data model, clan/nation registry, custom overrides data
     Services/        GML parser/writer, database service, image matching,
                      web scraper, text preprocessor, card text renderer
-    ViewModels/      MVVM view models for main window and EN sync
-    Views/           Avalonia XAML views
+    ViewModels/      MVVM view models for main window, EN sync, JP archive
+    Views/           Avalonia XAML views (main window, EN sync, JP archive,
+                     custom factions dialog)
     Controls/        Custom card text preview control
     Converters/      Value converters for UI bindings
     Helpers/         MD5 checksum generator
