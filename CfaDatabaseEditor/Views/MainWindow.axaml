@@ -453,24 +453,27 @@
             <GridSplitter Grid.Column="3" Width="4" ResizeDirection="Columns"/>
 
             <!-- RIGHT: Preview Panel -->
-            <DockPanel Grid.Column="4" Margin="4">
-                <!-- Card Image -->
-                <Border DockPanel.Dock="Top" Background="#333" CornerRadius="4"
-                        Height="440" Margin="0,0,0,4">
-                    <Image Source="{Binding CardImagePath, Converter={StaticResource PathToBitmap}}"
-                           Stretch="Uniform"
-                           StretchDirection="DownOnly"/>
-                </Border>
+            <Grid Grid.Column="4" Margin="4" RowDefinitions="440,4,*">
+                <!-- Card Image + Actions -->
+                <DockPanel Grid.Row="0" MinHeight="100">
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
+                        <Button Content="Replace Image"
+                                Click="OnReplaceImageClick"
+                                HorizontalAlignment="Stretch"/>
+                    </StackPanel>
+                    <Border Background="#333" CornerRadius="4">
+                        <Image Source="{Binding CardImagePath, Converter={StaticResource PathToBitmap}}"
+                               Stretch="Uniform"
+                               StretchDirection="DownOnly"/>
+                    </Border>
+                </DockPanel>
 
-                <!-- Image Actions -->
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="4" Margin="0,0,0,4">
-                    <Button Content="Replace Image"
-                            Click="OnReplaceImageClick"
-                            HorizontalAlignment="Stretch"/>
-                </StackPanel>
+                <GridSplitter Grid.Row="1" Height="4" ResizeDirection="Rows"
+                              HorizontalAlignment="Stretch"
+                              Background="Transparent"/>
 
                 <!-- In-Game Text Preview -->
-                <Border Background="#FFF" CornerRadius="4" BorderBrush="#DDD" BorderThickness="1">
+                <Border Grid.Row="2" Background="#FFF" CornerRadius="4" BorderBrush="#DDD" BorderThickness="1">
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Top" Text="In-Game Text Preview (Reference-Only!)"
                                    FontWeight="Bold" FontSize="12" Margin="8,4,8,2"/>
@@ -486,7 +489,7 @@
                         </ScrollViewer>
                     </DockPanel>
                 </Border>
-            </DockPanel>
+            </Grid>
 
         </Grid>
     </DockPanel>
