@@ -174,10 +174,13 @@ public class DatabaseService
 
     public Card CreateNewCard(string targetFileName)
     {
-        AllCardValue++;
+        BuiltInAllCardValue++;
+        if (BuiltInAllCardValue > AllCardValue)
+            AllCardValue = BuiltInAllCardValue;
+
         var card = new Card
         {
-            CardStat = AllCardValue,
+            CardStat = BuiltInAllCardValue,
             SourceFile = Path.GetFileName(targetFileName),
             SourceLineStart = -1,
             SourceLineEnd = -1,
