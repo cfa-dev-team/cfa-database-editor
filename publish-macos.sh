@@ -31,6 +31,10 @@ mkdir -p "$APP_BUNDLE/Contents/Resources"
 mv "$PUBLISH_DIR/$EXECUTABLE" "$APP_BUNDLE/Contents/MacOS/$EXECUTABLE"
 chmod +x "$APP_BUNDLE/Contents/MacOS/$EXECUTABLE"
 
+# Copy app icon
+ICON_NAME="CFADBE"
+cp "CfaDatabaseEditor/Assets/$ICON_NAME.icns" "$APP_BUNDLE/Contents/Resources/$ICON_NAME.icns"
+
 # Create Info.plist
 cat > "$APP_BUNDLE/Contents/Info.plist" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -53,6 +57,8 @@ cat > "$APP_BUNDLE/Contents/Info.plist" << PLIST
     <string>APPL</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
+    <key>CFBundleIconFile</key>
+    <string>$ICON_NAME</string>
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>LSMinimumSystemVersion</key>
