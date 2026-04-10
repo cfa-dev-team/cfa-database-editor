@@ -36,6 +36,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     // Card editor - bound to selected card
     [ObservableProperty] private string? _cardImagePath;
+    [ObservableProperty] private string _duplicateNameWarning = string.Empty;
 
     // New card targets - refreshed after loading to include custom factions
     [ObservableProperty] private ObservableCollection<ClanDefinition> _newCardTargets = new();
@@ -68,12 +69,65 @@ public partial class MainWindowViewModel : ViewModelBase
         NewCardTargets = new ObservableCollection<ClanDefinition>(ClanRegistry.GetFileTargetsForNewCard());
     }
 
+    private Card? _subscribedCard;
+
     partial void OnSelectedCardChanged(Card? value)
     {
+        if (_subscribedCard != null)
+            _subscribedCard.PropertyChanged -= OnSelectedCardPropertyChanged;
+
+        _subscribedCard = value;
+
         if (value != null)
+        {
+            value.PropertyChanged += OnSelectedCardPropertyChanged;
             CardImagePath = _db.GetCardImagePath(value.CardStat);
+            CheckDuplicateName();
+        }
         else
+        {
             CardImagePath = null;
+            DuplicateNameWarning = string.Empty;
+        }
+    }
+
+    private void OnSelectedCardPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Card.CardName))
+            CheckDuplicateName();
+    }
+
+    private void CheckDuplicateName()
+    {
+        if (SelectedCard == null || string.IsNullOrEmpty(SelectedCard.CardName))
+        {
+            DuplicateNameWarning = string.Empty;
+            return;
+        }
+
+        var duplicate = _allCardsList.FirstOrDefault(c =>
+            c != SelectedCard && c.CardName == SelectedCard.CardName);
+
+        DuplicateNameWarning = duplicate != null
+            ? $"Duplicate name! Card #{duplicate.CardStat} has the same name. CFA requires unique card names."
+            : string.Empty;
+    }
+
+    [RelayCommand]
+    private void FixDuplicateName()
+    {
+        if (SelectedCard == null) return;
+
+        var name = SelectedCard.CardName + " ";
+        var names = new HashSet<string>(_allCardsList
+            .Where(c => c != SelectedCard)
+            .Select(c => c.CardName));
+
+        while (names.Contains(name))
+            name += " ";
+
+        SelectedCard.CardName = name;
+        MarkCardModified();
     }
 
     partial void OnSearchTextChanged(string value) => ApplyFilters();
