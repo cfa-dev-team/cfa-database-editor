@@ -25,9 +25,11 @@
         <!-- Menu Bar -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem x:Name="OpenMenuItem" Header="_Open Database..." Click="OnOpenDatabaseClick"/>
+                <MenuItem x:Name="OpenMenuItem" Header="_Open Database..." Click="OnOpenDatabaseClick"
+                          InputGesture="Ctrl+O"/>
                 <MenuItem x:Name="SaveMenuItem" Header="_Save All"
-                          Command="{Binding SaveCommand}"/>
+                          Command="{Binding SaveCommand}"
+                          InputGesture="Ctrl+S"/>
                 <Separator/>
                 <MenuItem Header="E_xit" Click="OnExitClick"/>
             </MenuItem>
@@ -43,7 +45,8 @@
                     <MenuItem Header="Brandt Gate" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.BrandtGate}"/>
                     <MenuItem Header="Lyrical Monasterio" Command="{Binding AddNewCardCommand}" CommandParameter="{x:Static m:ClanRegistry.LyricalMonasterio}"/>
                 </MenuItem>
-                <MenuItem x:Name="DuplicateMenuItem" Header="_Duplicate" Command="{Binding DuplicateCardCommand}"/>
+                <MenuItem x:Name="DuplicateMenuItem" Header="_Duplicate" Command="{Binding DuplicateCardCommand}"
+                          InputGesture="Ctrl+D"/>
             </MenuItem>
             <MenuItem Header="_Git" x:Name="GitMenu" IsVisible="{Binding IsGitRepo}">
                 <MenuItem Header="_Fetch" Click="OnGitFetchClick"/>

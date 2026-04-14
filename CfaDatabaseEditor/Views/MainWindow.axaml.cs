@@ -20,21 +20,38 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        OpenMenuItem.HotKey = new KeyGesture(Key.O, PlatformCommandKey);
-        SaveMenuItem.HotKey = new KeyGesture(Key.S, PlatformCommandKey);
-        DuplicateMenuItem.HotKey = new KeyGesture(Key.D, PlatformCommandKey);
+        // Register shortcuts in the tunnel phase so they work regardless of
+        // which control currently has focus (TextBox, NumericUpDown, etc.).
+        AddHandler(KeyDownEvent, OnWindowKeyDownTunnel, Avalonia.Interactivity.RoutingStrategies.Tunnel);
 
-        KeyDown += OnWindowKeyDown;
         CardStatEditor.ValueChanged += OnCardStatValueChanged;
     }
 
-    private void OnWindowKeyDown(object? sender, KeyEventArgs e)
+    private void OnWindowKeyDownTunnel(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.F && e.KeyModifiers == PlatformCommandKey)
+        if (e.KeyModifiers != PlatformCommandKey) return;
+
+        switch (e.Key)
         {
-            SearchBox.Focus();
-            SearchBox.SelectAll();
-            e.Handled = true;
+            case Key.O:
+                OnOpenDatabaseClick(this, new RoutedEventArgs());
+                e.Handled = true;
+                break;
+            case Key.S:
+                if (DataContext is MainWindowViewModel vmS)
+                    vmS.SaveCommand.Execute(null);
+                e.Handled = true;
+                break;
+            case Key.D:
+                if (DataContext is MainWindowViewModel vmD)
+                    vmD.DuplicateCardCommand.Execute(null);
+                e.Handled = true;
+                break;
+            case Key.F:
+                SearchBox.Focus();
+                SearchBox.SelectAll();
+                e.Handled = true;
+                break;
         }
     }
 
