@@ -403,6 +403,16 @@ public partial class MainWindow : Window
         vm.SelectedCard.CardText = text;
     }
 
+    private void OnScrollToTopClick(object? sender, RoutedEventArgs e)
+    {
+        CardListBox.ScrollIntoView(CardListBox.Items.Cast<object>().FirstOrDefault()!);
+    }
+
+    private void OnScrollToBottomClick(object? sender, RoutedEventArgs e)
+    {
+        CardListBox.ScrollIntoView(CardListBox.Items.Cast<object>().LastOrDefault()!);
+    }
+
     private void OnExitClick(object? sender, RoutedEventArgs e)
     {
         Close();
