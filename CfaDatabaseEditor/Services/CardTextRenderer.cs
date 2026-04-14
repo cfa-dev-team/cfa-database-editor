@@ -537,9 +537,9 @@ public class CardTextRenderer
         // Draw icon
         if (_icons.TryGetValue(iconName, out var bitmap))
         {
-            float scale = 1f;
-            float drawWidth = bitmap.Width * scale;
-            canvas.DrawBitmap(bitmap, SKRect.Create(x, y, drawWidth, GetLineHeight()));
+            float drawWidth = bitmap.Width;
+            float drawHeight = bitmap.Height;
+            canvas.DrawBitmap(bitmap, SKRect.Create(x, y, drawWidth, drawHeight));
             x += drawWidth;
         }
 
@@ -565,9 +565,9 @@ public class CardTextRenderer
         // Draw the cost icon sprite
         if (_icons.TryGetValue(iconName, out var bitmap))
         {
-            float scale = GetLineHeight() / bitmap.Height;
-            float drawWidth = bitmap.Width * scale;
-            canvas.DrawBitmap(bitmap, SKRect.Create(x, y, drawWidth, GetLineHeight()));
+            float drawWidth = bitmap.Width;
+            float drawHeight = bitmap.Height;
+            canvas.DrawBitmap(bitmap, SKRect.Create(x, y, drawWidth, drawHeight));
             x += drawWidth;
         }
 
