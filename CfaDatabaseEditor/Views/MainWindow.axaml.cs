@@ -3,6 +3,8 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.VisualTree;
+using CfaDatabaseEditor.Controls;
 using CfaDatabaseEditor.Models;
 using CfaDatabaseEditor.Services;
 using CfaDatabaseEditor.ViewModels;
@@ -224,6 +226,8 @@ public partial class MainWindow : Window
         {
             vm.RefreshAfterCustomFactionChange();
             RebuildCustomFactionMenuItems(vm);
+            foreach (var picker in this.GetVisualDescendants().OfType<FactionPicker>())
+                picker.RefreshOptions();
             vm.StatusText = "Custom factions updated. Save the database to persist.";
         }
     }

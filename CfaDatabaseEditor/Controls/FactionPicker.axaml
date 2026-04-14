@@ -1,0 +1,12 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="CfaDatabaseEditor.Controls.FactionPicker">
+    <StackPanel Orientation="Horizontal" Spacing="4">
+        <ComboBox x:Name="FactionComboBox" Width="220"/>
+        <NumericUpDown x:Name="OtherNumeric"
+                       IsVisible="False"
+                       FormatString="0"
+                       Minimum="0" Maximum="32000"
+                       Width="120"/>
+    </StackPanel>
+</UserControl>
