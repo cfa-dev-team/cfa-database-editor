@@ -203,7 +203,7 @@ public static class GmlParser
             case "CardInClan9": card.CardInClan9 = intVal; break;
 
             // Triggers
-            case "TriggerUnit": card.TriggerUnit = intVal; break;
+            case "TriggerUnit": card.TriggerUnit = intVal ?? 0; break;
 
             // Persona Ride
             case "PersonaRide": card.PersonaRide = boolVal; break;

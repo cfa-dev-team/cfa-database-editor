@@ -43,8 +43,9 @@ public static class GmlWriter
             sb.AppendLine($"global.PersonaRideCardName[CardStat] = '{EscapeGmlString(card.PersonaRideCardName)}'");
         if (card.ForbidCrossPersonaRideUpon) sb.AppendLine("global.ForbidCrossPersonaRideUpon[CardStat] = 1");
 
-        // Triggers
-        WriteOptionalInt(sb, "TriggerUnit", card.TriggerUnit);
+        // Triggers (0 = None, skip)
+        if (card.TriggerUnit > 0)
+            sb.AppendLine($"global.TriggerUnit[CardStat] = {card.TriggerUnit}");
 
         // Extra Deck
         if (card.ExtraDeck) sb.AppendLine("global.ExtraDeck[CardStat] = 1");
