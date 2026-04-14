@@ -462,23 +462,25 @@ public partial class MainWindow : Window
         {
             var syncWindow = new EnSyncWindow();
             syncWindow.SetDatabase(vm.Database, new ImageService(vm.Database));
-            syncWindow.Show(this);
+            syncWindow.Show();
         }
     }
 
-    private async void OnJpArchiveClick(object? sender, RoutedEventArgs e)
+    private void OnJpArchiveClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is MainWindowViewModel vm && vm.Database.IsLoaded)
         {
             var archiveWindow = new JpArchiveWindow();
             archiveWindow.SetDatabase(vm.Database, new ImageService(vm.Database));
-            await archiveWindow.ShowDialog(this);
-
-            if (archiveWindow.CardsWereAdded)
+            archiveWindow.Closed += (_, _) =>
             {
-                vm.RefreshCardList();
-                vm.StatusText = "Cards added from JP archive. Save the database to persist.";
-            }
+                if (archiveWindow.CardsWereAdded)
+                {
+                    vm.RefreshCardList();
+                    vm.StatusText = "Cards added from JP archive. Save the database to persist.";
+                }
+            };
+            archiveWindow.Show();
         }
     }
 
