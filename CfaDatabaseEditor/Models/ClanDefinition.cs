@@ -103,9 +103,9 @@ public static class ClanRegistry
     public static readonly ClanDefinition BermudaTriangle = new() { Id = 13, Name = "Bermuda Triangle", Type = FactionType.Clan, Era = FactionEra.VPremium, ParentNationId = 6, DisplayColor = ClanMagellanica, FileName = "Bermuda.txt" };
 
     // Universal / Special Clans
-    public static readonly ClanDefinition CrayElemental = new() { Id = 25, Name = "Cray Elemental", Type = FactionType.Clan, Era = FactionEra.Other, DisplayColor = ClanGrey, FileName = "Cray Elemental.txt" };
-    public static readonly ClanDefinition ToukenRanbu = new() { Id = 27, Name = "Touken Ranbu", Type = FactionType.Clan, Era = FactionEra.Crossover, DisplayColor = ClanGrey, FileName = "Touken Ranbu.txt" };
-    public static readonly ClanDefinition BangDream = new() { Id = 31, Name = "Bang Dream", Type = FactionType.Clan, Era = FactionEra.Crossover, DisplayColor = ClanPink, FileName = "Bang Dream.txt" };
+    public static readonly ClanDefinition CrayElemental = new() { Id = 25, Name = "Cray Elemental", Type = FactionType.Clan, Era = FactionEra.Other, ParentNationId = 8, DisplayColor = ClanGrey, FileName = "Cray Elemental.txt" };
+    public static readonly ClanDefinition ToukenRanbu = new() { Id = 27, Name = "Touken Ranbu", Type = FactionType.Clan, Era = FactionEra.Crossover, ParentNationId = 8, DisplayColor = ClanGrey, FileName = "Touken Ranbu.txt" };
+    public static readonly ClanDefinition BangDream = new() { Id = 31, Name = "Bang Dream", Type = FactionType.Clan, Era = FactionEra.Crossover, ParentNationId = 8, DisplayColor = ClanPink, FileName = "Bang Dream.txt" };
     public static readonly ClanDefinition HiddenClan = new() { Id = 29, Name = "Hidden (Technical)", Type = FactionType.Clan, Era = FactionEra.Other, DisplayColor = Color.Parse("#616161") };
     public static readonly ClanDefinition OrderFilter = new() { Id = 30, Name = "Orders (Filter)", Type = FactionType.Clan, Era = FactionEra.Other, DisplayColor = ClanGrey, FileName = "Order Cards.txt" };
 

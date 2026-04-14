@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="CfaDatabaseEditor.Views.GitBranchWindow"
+        Title="Checkout Branch"
+        Width="400" Height="450"
+        MinWidth="300" MinHeight="300"
+        WindowStartupLocation="CenterOwner">
+
+    <DockPanel Margin="12">
+        <!-- Bottom: buttons & status -->
+        <TextBlock x:Name="StatusLabel" DockPanel.Dock="Bottom" FontSize="11" Foreground="{DynamicResource SubtleTextBrush}"
+                   Margin="0,4,0,0" TextWrapping="Wrap"/>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
+            <Button x:Name="CheckoutButton" Content="Checkout" Click="OnCheckoutClick" Width="90" IsEnabled="False"/>
+            <Button Content="Cancel" Click="OnCancelClick" Width="80"/>
+        </StackPanel>
+
+        <!-- Search -->
+        <TextBox x:Name="SearchBox" DockPanel.Dock="Top" Watermark="Filter branches..."
+                 Margin="0,0,0,8" TextChanged="OnSearchChanged"/>
+
+        <!-- Branch list -->
+        <Border BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1" CornerRadius="4">
+            <ListBox x:Name="BranchList" SelectionChanged="OnBranchSelected"
+                     DoubleTapped="OnBranchDoubleClick"/>
+        </Border>
+    </DockPanel>
+</Window>

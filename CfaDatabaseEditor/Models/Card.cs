@@ -94,8 +94,12 @@ public class Card : INotifyPropertyChanged
     public int? CardInClan9 { get; set; }
 
     // === Triggers ===
-    private int? _triggerUnit;
-    public int? TriggerUnit { get => _triggerUnit; set => Set(ref _triggerUnit, value); }
+    private int _triggerUnit;
+    public int TriggerUnit
+    {
+        get => _triggerUnit;
+        set => Set(ref _triggerUnit, value < 0 ? 0 : value);
+    }
 
     // === Persona Ride ===
     public bool PersonaRide { get; set; }

@@ -5,10 +5,41 @@
              RequestedThemeVariant="Default">
              <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="SectionBackgroundBrush" Color="#F8F8F8"/>
+                    <SolidColorBrush x:Key="SectionBorderBrush" Color="#DDDDDD"/>
+                    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#F0F0F0"/>
+                    <SolidColorBrush x:Key="SourceInfoBackgroundBrush" Color="#EFEFEF"/>
+                    <SolidColorBrush x:Key="InfoPanelBackgroundBrush" Color="#F5F5F5"/>
+                    <SolidColorBrush x:Key="InfoBoxBackgroundBrush" Color="#E8E8E8"/>
+                    <SolidColorBrush x:Key="EncodingIssueBrush" Color="#FFDDDD"/>
+                    <SolidColorBrush x:Key="SubtleTextBrush" Color="#888888"/>
+                    <SolidColorBrush x:Key="AccentTealBrush" Color="#00897B"/>
+                    <SolidColorBrush x:Key="WarningOrangeBrush" Color="#E65100"/>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="SectionBackgroundBrush" Color="#2D2D2D"/>
+                    <SolidColorBrush x:Key="SectionBorderBrush" Color="#444444"/>
+                    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#252525"/>
+                    <SolidColorBrush x:Key="SourceInfoBackgroundBrush" Color="#333333"/>
+                    <SolidColorBrush x:Key="InfoPanelBackgroundBrush" Color="#2A2A2A"/>
+                    <SolidColorBrush x:Key="InfoBoxBackgroundBrush" Color="#383838"/>
+                    <SolidColorBrush x:Key="EncodingIssueBrush" Color="#4D1A1A"/>
+                    <SolidColorBrush x:Key="SubtleTextBrush" Color="#999999"/>
+                    <SolidColorBrush x:Key="AccentTealBrush" Color="#4DB6AC"/>
+                    <SolidColorBrush x:Key="WarningOrangeBrush" Color="#FF9800"/>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
-  
+
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>

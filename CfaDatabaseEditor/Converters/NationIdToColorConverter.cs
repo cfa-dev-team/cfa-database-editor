@@ -63,8 +63,9 @@ public class CardToColorBrushConverter : IValueConverter
     {
         if (value is CfaDatabaseEditor.Models.Card card)
         {
-            // Check clan first - it's more specific
-            if (card.CardInClan.HasValue && card.CardInClan.Value > 0)
+            // Check clan first - it's more specific (but skip Orders, which is just a filter tag)
+            if (card.CardInClan.HasValue && card.CardInClan.Value > 0
+                && card.CardInClan.Value != CfaDatabaseEditor.Models.ClanRegistry.OrderFilter.Id)
             {
                 var clan = CfaDatabaseEditor.Models.ClanRegistry.GetClanById(card.CardInClan.Value);
                 if (clan != null)

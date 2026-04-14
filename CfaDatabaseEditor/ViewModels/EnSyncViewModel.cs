@@ -50,19 +50,43 @@ public partial class EnSyncViewModel : ViewModelBase
             catch { }
         }
 
-        // Load CFA image from file
-        if (value.MatchedCard != null && _db != null)
+        LoadCfaPreview(value);
+    }
+
+    private void LoadCfaPreview(SyncResult result)
+    {
+        if (_db == null) return;
+
+        var cardStat = result.MatchedCardStat;
+        if (cardStat == null) { CfaPreviewImage = null; return; }
+
+        var path = _db.GetCardImagePath(cardStat.Value);
+        if (path != null && File.Exists(path))
         {
-            var path = _db.GetCardImagePath(value.MatchedCard.CardStat);
-            if (path != null && File.Exists(path))
-            {
-                try
-                {
-                    CfaPreviewImage = new Bitmap(path);
-                }
-                catch { }
-            }
+            try { CfaPreviewImage = new Bitmap(path); }
+            catch { CfaPreviewImage = null; }
         }
+        else
+        {
+            CfaPreviewImage = null;
+        }
+    }
+
+    private void OnResultPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(SyncResult.MatchedCardStat) || sender is not SyncResult result || _db == null)
+            return;
+
+        // Look up the card by the manually entered ID
+        var card = result.MatchedCardStat.HasValue
+            ? _db.AllCards.FirstOrDefault(c => c.CardStat == result.MatchedCardStat.Value)
+            : null;
+        result.MatchedCard = card;
+        result.Confidence = 0;
+
+        // Refresh CFA preview if this is the currently selected result
+        if (result == SelectedResult)
+            LoadCfaPreview(result);
     }
 
     [RelayCommand]
@@ -71,6 +95,7 @@ public partial class EnSyncViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(Url) || IsScraping) return;
 
         IsScraping = true;
+        foreach (var r in Results) r.PropertyChanged -= OnResultPropertyChanged;
         Results.Clear();
 
         try
@@ -84,17 +109,21 @@ public partial class EnSyncViewModel : ViewModelBase
             var progress = new Progress<string>(s => ProgressText = s);
             await foreach (var scraped in _scraper.ScrapeExpansionAsync(Url, progress))
             {
+                var imageData = scraped.ImageData != null
+                    ? ImageService.FixRotationIfNeeded(scraped.ImageData)
+                    : null;
+
                 var result = new SyncResult
                 {
                     EnName = scraped.Name,
                     EnCardNo = scraped.CardNo,
                     EnImageUrl = scraped.ImageUrl,
-                    EnImageData = scraped.ImageData
+                    EnImageData = imageData
                 };
 
-                if (scraped.ImageData != null && _db != null)
+                if (imageData != null && _db != null)
                 {
-                    var match = _matcher.FindBestMatch(scraped.ImageData);
+                    var match = _matcher.FindBestMatch(imageData);
                     if (match.HasValue)
                     {
                         result.MatchedCard = _db.AllCards.FirstOrDefault(c => c.CardStat == match.Value.CardStat);
@@ -102,6 +131,7 @@ public partial class EnSyncViewModel : ViewModelBase
                     }
                 }
 
+                result.PropertyChanged += OnResultPropertyChanged;
                 Results.Add(result);
             }
         }

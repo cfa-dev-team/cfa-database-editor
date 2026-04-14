@@ -1,7 +1,10 @@
+using System.Text.RegularExpressions;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.VisualTree;
+using CfaDatabaseEditor.Controls;
 using CfaDatabaseEditor.Models;
 using CfaDatabaseEditor.Services;
 using CfaDatabaseEditor.ViewModels;
@@ -15,25 +18,90 @@ public partial class MainWindow : Window
 
     private bool _suppressCardStatChange;
 
+    private const double DefaultLeftPanelWidth = 260;
+    private const double DefaultRightPanelWidth = 310;
+    private const double DefaultPreviewImageHeight = 440;
+
     public MainWindow()
     {
         InitializeComponent();
 
-        OpenMenuItem.HotKey = new KeyGesture(Key.O, PlatformCommandKey);
-        SaveMenuItem.HotKey = new KeyGesture(Key.S, PlatformCommandKey);
-        DuplicateMenuItem.HotKey = new KeyGesture(Key.D, PlatformCommandKey);
+        // Register shortcuts in the tunnel phase so they work regardless of
+        // which control currently has focus (TextBox, NumericUpDown, etc.).
+        AddHandler(KeyDownEvent, OnWindowKeyDownTunnel, Avalonia.Interactivity.RoutingStrategies.Tunnel);
 
-        KeyDown += OnWindowKeyDown;
         CardStatEditor.ValueChanged += OnCardStatValueChanged;
+
+        RestoreLayout();
     }
 
-    private void OnWindowKeyDown(object? sender, KeyEventArgs e)
+    private void RestoreLayout()
     {
-        if (e.Key == Key.F && e.KeyModifiers == PlatformCommandKey)
+        var layout = ConfigService.Load().Layout;
+        if (layout == null) return;
+
+        if (layout.LeftPanelWidth.HasValue)
+            MainContentGrid.ColumnDefinitions[0].Width = new GridLength(layout.LeftPanelWidth.Value, GridUnitType.Pixel);
+        if (layout.RightPanelWidth.HasValue)
+            MainContentGrid.ColumnDefinitions[4].Width = new GridLength(layout.RightPanelWidth.Value, GridUnitType.Pixel);
+        if (layout.PreviewImageHeight.HasValue)
+            PreviewGrid.RowDefinitions[0].Height = new GridLength(layout.PreviewImageHeight.Value, GridUnitType.Pixel);
+    }
+
+    private void SaveLayout()
+    {
+        var config = ConfigService.Load();
+        config.Layout = new LayoutConfig
         {
-            SearchBox.Focus();
-            SearchBox.SelectAll();
-            e.Handled = true;
+            LeftPanelWidth = MainContentGrid.ColumnDefinitions[0].ActualWidth,
+            RightPanelWidth = MainContentGrid.ColumnDefinitions[4].ActualWidth,
+            PreviewImageHeight = PreviewGrid.RowDefinitions[0].ActualHeight
+        };
+        ConfigService.Save(config);
+    }
+
+    protected override void OnClosing(WindowClosingEventArgs e)
+    {
+        SaveLayout();
+        base.OnClosing(e);
+    }
+
+    private void ApplyDefaultLayout()
+    {
+        MainContentGrid.ColumnDefinitions[0].Width = new GridLength(DefaultLeftPanelWidth, GridUnitType.Pixel);
+        MainContentGrid.ColumnDefinitions[4].Width = new GridLength(DefaultRightPanelWidth, GridUnitType.Pixel);
+        PreviewGrid.RowDefinitions[0].Height = new GridLength(DefaultPreviewImageHeight, GridUnitType.Pixel);
+    }
+
+    private void OnWindowKeyDownTunnel(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyModifiers != PlatformCommandKey) return;
+
+        switch (e.Key)
+        {
+            case Key.O:
+                OnOpenDatabaseClick(this, new RoutedEventArgs());
+                e.Handled = true;
+                break;
+            case Key.S:
+                if (DataContext is MainWindowViewModel vmS)
+                    vmS.SaveCommand.Execute(null);
+                e.Handled = true;
+                break;
+            case Key.D:
+                if (DataContext is MainWindowViewModel vmD)
+                    vmD.DuplicateCardCommand.Execute(null);
+                e.Handled = true;
+                break;
+            case Key.R:
+                OnReloadDatabaseClick(this, new RoutedEventArgs());
+                e.Handled = true;
+                break;
+            case Key.F:
+                SearchBox.Focus();
+                SearchBox.SelectAll();
+                e.Handled = true;
+                break;
         }
     }
 
@@ -45,6 +113,36 @@ public partial class MainWindow : Window
         if (path == null) return;
         await vm.LoadFromPathAsync(path);
         RebuildCustomFactionMenuItems(vm);
+    }
+
+    private async void OnReloadDatabaseClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        await vm.ReloadDatabaseAsync();
+        RebuildCustomFactionMenuItems(vm);
+    }
+
+    private void OnRecentMenuOpened(object? sender, RoutedEventArgs e)
+    {
+        RecentMenu.Items.Clear();
+        var recent = Services.ConfigService.GetRecentFolders();
+        if (recent.Count == 0)
+        {
+            RecentMenu.Items.Add(new MenuItem { Header = "(empty)", IsEnabled = false });
+            return;
+        }
+
+        foreach (var folder in recent)
+        {
+            var item = new MenuItem { Header = folder };
+            item.Click += async (_, _) =>
+            {
+                if (DataContext is not MainWindowViewModel vm) return;
+                await vm.LoadFromPathAsync(folder);
+                RebuildCustomFactionMenuItems(vm);
+            };
+            RecentMenu.Items.Add(item);
+        }
     }
 
     private async void OnReplaceImageClick(object? sender, RoutedEventArgs e)
@@ -128,6 +226,8 @@ public partial class MainWindow : Window
         {
             vm.RefreshAfterCustomFactionChange();
             RebuildCustomFactionMenuItems(vm);
+            foreach (var picker in this.GetVisualDescendants().OfType<FactionPicker>())
+                picker.RefreshOptions();
             vm.StatusText = "Custom factions updated. Save the database to persist.";
         }
     }
@@ -230,6 +330,179 @@ public partial class MainWindow : Window
         return result;
     }
 
+    // ── Git handlers ──
+
+    private async void OnGitFetchClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        vm.StatusText = "Fetching...";
+        var result = await vm.Git.FetchAsync();
+        if (result.Success)
+        {
+            await vm.RefreshGitStatusAsync();
+            vm.StatusText = "Fetch completed.";
+        }
+        else
+        {
+            vm.StatusText = $"Fetch failed: {result.Error.Trim()}";
+        }
+    }
+
+    private async void OnGitPullClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        vm.StatusText = "Pulling...";
+        var result = await vm.Git.PullAsync();
+        if (result.Success)
+        {
+            vm.StatusText = "Pull completed. Reloading database...";
+            await vm.ReloadDatabaseAsync();
+            await vm.RefreshGitStatusAsync();
+        }
+        else
+        {
+            vm.StatusText = $"Pull failed: {result.Error.Trim()}";
+        }
+    }
+
+    private async void OnGitPushClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        vm.StatusText = "Pushing...";
+        var result = await vm.Git.PushAsync();
+        if (result.Success)
+        {
+            await vm.RefreshGitStatusAsync();
+            vm.StatusText = "Push completed.";
+        }
+        else
+        {
+            vm.StatusText = $"Push failed: {result.Error.Trim()}";
+        }
+    }
+
+    private async void OnGitCommitClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        var commitWindow = new GitCommitWindow(vm.Git);
+        await commitWindow.ShowDialog(this);
+        if (commitWindow.FilesWereDiscarded)
+        {
+            await vm.ReloadDatabaseAsync();
+        }
+        else if (commitWindow.CommitWasMade)
+        {
+            await vm.RefreshGitStatusAsync();
+            vm.StatusText = "Commit created.";
+        }
+    }
+
+    private async void OnGitCheckoutClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        var branchWindow = new GitBranchWindow(vm.Git);
+        await branchWindow.ShowDialog(this);
+        if (branchWindow.CheckedOutBranch != null)
+        {
+            vm.StatusText = $"Switched to {branchWindow.CheckedOutBranch}. Reloading database...";
+            await vm.ReloadDatabaseAsync();
+            await vm.RefreshGitStatusAsync();
+        }
+    }
+
+    private async void OnGitRefreshClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        await vm.RefreshGitStatusAsync();
+        vm.StatusText = "Git status refreshed.";
+    }
+
+    private async void OnGitBranchClick(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+    {
+        // Clicking the branch name in the status bar opens the checkout window
+        await OnGitCheckoutClickAsync();
+    }
+
+    private async Task OnGitCheckoutClickAsync()
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        var branchWindow = new GitBranchWindow(vm.Git);
+        await branchWindow.ShowDialog(this);
+        if (branchWindow.CheckedOutBranch != null)
+        {
+            vm.StatusText = $"Switched to {branchWindow.CheckedOutBranch}. Reloading database...";
+            await vm.ReloadDatabaseAsync();
+            await vm.RefreshGitStatusAsync();
+        }
+    }
+
+    private void OnAutoPreformatClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        if (vm.SelectedCard == null || string.IsNullOrEmpty(vm.SelectedCard.CardText)) return;
+
+        var text = vm.SelectedCard.CardText;
+
+        // Separate Brackets
+        text = Regex.Replace(text, @"([\]\)]{1})([\[\(]{1})", "$1 $2");
+
+        // Replace bullet points with Win-1251 middle dot (•) and add space after them
+        text = text.Replace("・", "•");
+        text = Regex.Replace(text, @"(•)(\S)", "$1 $2");
+
+        // [AUTO] -> AUTO, [ACT] -> ACT, [CONT] -> CONT
+        text = text.Replace("[AUTO]", "AUTO");
+        text = text.Replace("[ACT]", "ACT");
+        text = text.Replace("[CONT]", "CONT");
+
+        // [COST][ -> COST [
+        text = text.Replace("[COST]", "COST");
+
+        // [1/Turn] -> 1/Turn, [1/Fight] -> 1/Fight
+        text = text.Replace("[1/Turn]", "1/Turn");
+        text = text.Replace("[1/Fight]", "1/Fight");
+
+        // [Power] -> power, [Shield] -> shield, [Critical] -> critical
+        text = text.Replace("[Power]", "power");
+        text = text.Replace("[Shield]", "shield");
+        text = text.Replace("[Critical]", "critical");
+
+        // [Stand] -> stand, [Rest] -> rest
+        text = text.Replace("[Stand]", "stand");
+        text = text.Replace("[Rest]", "rest");
+
+        // :RC: -> RC, :VC: -> VC, :GC: -> GC
+        text = text.Replace(":RC:", "RC");
+        text = text.Replace(":VC:", "VC");
+        text = text.Replace(":GC:", "GC");
+
+        // (RC) -> RC, (VC) -> VC, (GC) -> GC
+        text = text.Replace("(RC)", "RC");
+        text = text.Replace("(VC)", "VC");
+        text = text.Replace("(GC)", "GC");
+
+        // Soul-Blast -> Soul Blast, Counter-Charge -> Counter Charge, etc.
+        text = Regex.Replace(text, @"(Soul|Counter|Energy)-(Blast|Charge)", "$1 $2");
+
+        // :\w -> : \w  (colon immediately followed by a word character, add space)
+        text = Regex.Replace(text, @":(\S)", ": $1");
+
+        // (\d) -> \d  (single digit in parentheses, remove the parens)
+        text = Regex.Replace(text, @"\((\d)\)", "$1");
+
+        vm.SelectedCard.CardText = text;
+    }
+
+    private void OnScrollToTopClick(object? sender, RoutedEventArgs e)
+    {
+        CardListBox.ScrollIntoView(CardListBox.Items.Cast<object>().FirstOrDefault()!);
+    }
+
+    private void OnScrollToBottomClick(object? sender, RoutedEventArgs e)
+    {
+        CardListBox.ScrollIntoView(CardListBox.Items.Cast<object>().LastOrDefault()!);
+    }
+
     private void OnExitClick(object? sender, RoutedEventArgs e)
     {
         Close();
@@ -241,24 +514,32 @@ public partial class MainWindow : Window
         {
             var syncWindow = new EnSyncWindow();
             syncWindow.SetDatabase(vm.Database, new ImageService(vm.Database));
-            syncWindow.Show(this);
+            syncWindow.Show();
         }
     }
 
-    private async void OnJpArchiveClick(object? sender, RoutedEventArgs e)
+    private void OnJpArchiveClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is MainWindowViewModel vm && vm.Database.IsLoaded)
         {
             var archiveWindow = new JpArchiveWindow();
             archiveWindow.SetDatabase(vm.Database, new ImageService(vm.Database));
-            await archiveWindow.ShowDialog(this);
-
-            if (archiveWindow.CardsWereAdded)
+            archiveWindow.Closed += (_, _) =>
             {
-                vm.RefreshCardList();
-                vm.StatusText = "Cards added from JP archive. Save the database to persist.";
-            }
+                if (archiveWindow.CardsWereAdded)
+                {
+                    vm.RefreshCardList();
+                    vm.StatusText = "Cards added from JP archive. Save the database to persist.";
+                }
+            };
+            archiveWindow.Show();
         }
+    }
+
+    private void OnResetLayoutClick(object? sender, RoutedEventArgs e)
+    {
+        ApplyDefaultLayout();
+        SaveLayout();
     }
 
     private async void OnAboutClick(object? sender, RoutedEventArgs e)
@@ -287,7 +568,7 @@ public partial class MainWindow : Window
         });
         panel.Children.Add(new TextBlock
         {
-            Text = "Version 1.1.0 beta",
+            Text = "Version 1.2.0 beta",
             FontSize = 13,
             Foreground = Avalonia.Media.Brushes.Gray
         });

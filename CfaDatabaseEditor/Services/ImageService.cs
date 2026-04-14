@@ -49,6 +49,31 @@ public class ImageService
             Path.Combine(_db.CardSpriteMini2Path, $"n{cardStat}.jpg"));
     }
 
+    /// <summary>
+    /// If the image has a horizontal aspect ratio (width > height), rotates it 90 degrees
+    /// counter-clockwise and returns the re-encoded bytes. Otherwise returns the input unchanged.
+    /// </summary>
+    public static byte[] FixRotationIfNeeded(byte[] imageData)
+    {
+        using var bitmap = SKBitmap.Decode(imageData);
+        if (bitmap == null || bitmap.Width <= bitmap.Height)
+            return imageData;
+
+        // Rotate 90 degrees counter-clockwise
+        var rotated = new SKBitmap(bitmap.Height, bitmap.Width);
+        using (var canvas = new SKCanvas(rotated))
+        {
+            canvas.Translate(0, bitmap.Width);
+            canvas.RotateDegrees(-90);
+            canvas.DrawBitmap(bitmap, 0, 0);
+        }
+
+        using var image = SKImage.FromBitmap(rotated);
+        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+        rotated.Dispose();
+        return data.ToArray();
+    }
+
     private static void SaveResized(SKBitmap original, int targetWidth, string outputPath)
     {
         float ratio = (float)targetWidth / original.Width;

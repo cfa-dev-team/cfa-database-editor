@@ -30,8 +30,35 @@ public class SyncResult : INotifyPropertyChanged
     public string EnImageUrl { get; set; } = string.Empty;
     public byte[]? EnImageData { get; set; }
 
-    public Card? MatchedCard { get; set; }
-    public double Confidence { get; set; }
+    private Card? _matchedCard;
+    public Card? MatchedCard
+    {
+        get => _matchedCard;
+        set { if (_matchedCard == value) return; _matchedCard = value; OnPropertyChanged(); OnPropertyChanged(nameof(MatchedCardStat)); }
+    }
+
+    private double _confidence;
+    public double Confidence
+    {
+        get => _confidence;
+        set { if (_confidence == value) return; _confidence = value; OnPropertyChanged(); }
+    }
+
+    /// <summary>
+    /// Editable CFA ID. Setting this fires a property change so the ViewModel
+    /// can look up the corresponding card and update MatchedCard.
+    /// </summary>
+    private int? _matchedCardStat;
+    public int? MatchedCardStat
+    {
+        get => _matchedCardStat ?? _matchedCard?.CardStat;
+        set
+        {
+            if (_matchedCardStat == value) return;
+            _matchedCardStat = value;
+            OnPropertyChanged();
+        }
+    }
 
     private bool _isApproved;
     public bool IsApproved

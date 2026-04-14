@@ -32,7 +32,7 @@
                                    FormatString="0" Width="120"/>
                 </StackPanel>
             </DockPanel>
-            <TextBlock Text="{Binding ProgressText}" Foreground="Gray"/>
+            <TextBlock Text="{Binding ProgressText}" Foreground="{DynamicResource SubtleTextBrush}"/>
         </StackPanel>
 
         <!-- Bottom: Action buttons -->
@@ -57,8 +57,8 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="m:JpArchiveCard">
                         <Border Margin="4" Padding="6" CornerRadius="4"
-                                BorderBrush="#CCC" BorderThickness="1"
-                                Background="#F8F8F8" Width="220">
+                                BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1"
+                                Background="{DynamicResource SectionBackgroundBrush}" Width="220">
                             <StackPanel Spacing="4">
                                 <!-- Card Image -->
                                 <Border Background="#333" CornerRadius="4" Height="300">
