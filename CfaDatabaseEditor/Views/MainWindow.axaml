@@ -464,7 +464,7 @@
                                 <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding RequiredVan}" Width="250" HorizontalAlignment="Left"/>
 
                                 <TextBlock Grid.Row="8" Grid.Column="0" Text="Move All:" VerticalAlignment="Center"/>
-                                <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding MoveAll}" Watermark="Bind/Hand/Drop/OriginalDress" Width="200" HorizontalAlignment="Left"/>
+                                <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding MoveAll}" Watermark="Bind/Hand/Drop/OriginalDress" Width="220" HorizontalAlignment="Left"/>
 
                                 <TextBlock Grid.Row="9" Grid.Column="0" Text="Reveal Top X:" VerticalAlignment="Center"/>
                                 <NumericUpDown FormatString="0" Grid.Row="9" Grid.Column="1" Value="{Binding RevealTopX}" Width="120" HorizontalAlignment="Left"/>
