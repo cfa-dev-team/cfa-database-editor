@@ -9,7 +9,7 @@
         mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="800"
         x:Class="CfaDatabaseEditor.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="CFA Database Editor v1.1.1 beta"
+        Title="CFA Database Editor v1.2.0 beta"
         Icon="avares://CfaDatabaseEditor/Assets/CFADBE.ico"
         Width="1400" Height="850"
         MinWidth="900" MinHeight="600">
