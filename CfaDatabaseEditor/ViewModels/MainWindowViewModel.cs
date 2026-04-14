@@ -99,10 +99,21 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    private static readonly HashSet<string> MetadataProperties = new()
+    {
+        nameof(Card.IsModified), nameof(Card.IsCustomCard),
+        nameof(Card.SourceFile), nameof(Card.SourceLineStart), nameof(Card.SourceLineEnd),
+        nameof(Card.DisplayName), nameof(Card.HasEncodingIssue), nameof(Card.EncodingIssueDetails)
+    };
+
     private void OnSelectedCardPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(Card.CardName))
             CheckDuplicateName();
+
+        // Auto-mark card (and its file) as modified when any data property changes
+        if (e.PropertyName != null && !MetadataProperties.Contains(e.PropertyName))
+            MarkCardModified();
     }
 
     private void CheckDuplicateName()
