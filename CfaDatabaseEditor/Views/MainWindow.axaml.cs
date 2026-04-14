@@ -287,7 +287,7 @@ public partial class MainWindow : Window
         });
         panel.Children.Add(new TextBlock
         {
-            Text = "Version 1.1.0 beta",
+            Text = "Version 1.1.1 beta",
             FontSize = 13,
             Foreground = Avalonia.Media.Brushes.Gray
         });
