@@ -47,6 +47,10 @@ public partial class MainWindow : Window
                     vmD.DuplicateCardCommand.Execute(null);
                 e.Handled = true;
                 break;
+            case Key.R:
+                OnReloadDatabaseClick(this, new RoutedEventArgs());
+                e.Handled = true;
+                break;
             case Key.F:
                 SearchBox.Focus();
                 SearchBox.SelectAll();
@@ -63,6 +67,36 @@ public partial class MainWindow : Window
         if (path == null) return;
         await vm.LoadFromPathAsync(path);
         RebuildCustomFactionMenuItems(vm);
+    }
+
+    private async void OnReloadDatabaseClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        await vm.ReloadDatabaseAsync();
+        RebuildCustomFactionMenuItems(vm);
+    }
+
+    private void OnRecentMenuOpened(object? sender, RoutedEventArgs e)
+    {
+        RecentMenu.Items.Clear();
+        var recent = Services.RecentFoldersService.Load();
+        if (recent.Count == 0)
+        {
+            RecentMenu.Items.Add(new MenuItem { Header = "(empty)", IsEnabled = false });
+            return;
+        }
+
+        foreach (var folder in recent)
+        {
+            var item = new MenuItem { Header = folder };
+            item.Click += async (_, _) =>
+            {
+                if (DataContext is not MainWindowViewModel vm) return;
+                await vm.LoadFromPathAsync(folder);
+                RebuildCustomFactionMenuItems(vm);
+            };
+            RecentMenu.Items.Add(item);
+        }
     }
 
     private async void OnReplaceImageClick(object? sender, RoutedEventArgs e)
@@ -360,6 +394,10 @@ public partial class MainWindow : Window
         // Separate Brackets
         text = Regex.Replace(text, @"([\]\)]{1})([\[\(]{1})", "$1 $2");
 
+        // Replace bullet points with Win-1251 middle dot (•) and add space after them
+        text = text.Replace("・", "•");
+        text = Regex.Replace(text, @"(•)(\S)", "$1 $2");
+
         // [AUTO] -> AUTO, [ACT] -> ACT, [CONT] -> CONT
         text = text.Replace("[AUTO]", "AUTO");
         text = text.Replace("[ACT]", "ACT");
@@ -395,7 +433,7 @@ public partial class MainWindow : Window
         text = Regex.Replace(text, @"(Soul|Counter|Energy)-(Blast|Charge)", "$1 $2");
 
         // :\w -> : \w  (colon immediately followed by a word character, add space)
-        text = Regex.Replace(text, @":(\w)", ": $1");
+        text = Regex.Replace(text, @":(\S)", ": $1");
 
         // (\d) -> \d  (single digit in parentheses, remove the parens)
         text = Regex.Replace(text, @"\((\d)\)", "$1");

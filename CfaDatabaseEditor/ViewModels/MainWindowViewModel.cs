@@ -174,6 +174,8 @@ public partial class MainWindowViewModel : ViewModelBase
             // Rebuild filter options to include custom factions
             RebuildFilterOptions();
 
+            RecentFoldersService.Add(path);
+
             IsLoaded = true;
             Program.Log?.WriteLine($"[INFO] Calling ApplyFilters...");
             ApplyFilters();

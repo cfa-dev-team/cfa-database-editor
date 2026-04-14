@@ -27,6 +27,12 @@
             <MenuItem Header="_File">
                 <MenuItem x:Name="OpenMenuItem" Header="_Open Database..." Click="OnOpenDatabaseClick"
                           InputGesture="Ctrl+O"/>
+                <MenuItem x:Name="RecentMenu" Header="_Recent Folders"
+                          SubmenuOpened="OnRecentMenuOpened">
+                    <MenuItem Header="(empty)" IsEnabled="False"/>
+                </MenuItem>
+                <MenuItem Header="_Reload Database" Click="OnReloadDatabaseClick"
+                          InputGesture="Ctrl+R"/>
                 <MenuItem x:Name="SaveMenuItem" Header="_Save All"
                           Command="{Binding SaveCommand}"
                           InputGesture="Ctrl+S"/>
