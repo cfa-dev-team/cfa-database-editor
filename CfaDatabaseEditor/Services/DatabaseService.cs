@@ -37,13 +37,23 @@ public class DatabaseService
         CustomOverrides = GmlParser.ParseCustomOverrides(textPath);
         if (CustomOverrides != null)
         {
-            Program.Log?.WriteLine($"[INFO] Found Custom Overrides.txt with {CustomOverrides.Factions.Count} custom factions");
+            Program.Log?.WriteLine($"[INFO] Found Custom Overrides.txt with {CustomOverrides.Factions.Count} custom factions (UTF-8: {CustomOverrides.CustomFactionUTF8 == true})");
             RegisterCustomFactions(CustomOverrides);
 
             // Custom Overrides AllCard takes precedence
             if (CustomOverrides.AllCardOverride.HasValue && CustomOverrides.AllCardOverride.Value > AllCardValue)
                 AllCardValue = CustomOverrides.AllCardOverride.Value;
         }
+
+        // Determine encoding for custom faction files
+        bool customIsUtf8 = CustomOverrides?.CustomFactionUTF8 == true;
+        var customEncoding = GmlParser.GetCustomEncoding(customIsUtf8);
+        var builtInEncoding = GmlParser.GetBuiltInEncoding();
+
+        // Build a set of custom faction file names for encoding lookup
+        var customFileNames = CustomOverrides?.Factions
+            .Select(f => Path.GetFileName(f.FileName))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase) ?? new HashSet<string>();
 
         var txtFiles = Directory.GetFiles(textPath, "*.txt", SearchOption.AllDirectories);
         var parsedFiles = new List<CardFile>();
@@ -63,7 +73,10 @@ public class DatabaseService
 
                 try
                 {
-                    var cardFile = GmlParser.ParseFile(file);
+                    // Use custom encoding for custom faction files, built-in UTF-8 for all others
+                    var isCustomFile = customFileNames.Contains(Path.GetFileName(file));
+                    var encoding = isCustomFile ? customEncoding : builtInEncoding;
+                    var cardFile = GmlParser.ParseFile(file, encoding);
                     if (cardFile.Cards.Count > 0)
                         parsedFiles.Add(cardFile);
                     count++;
@@ -254,11 +267,13 @@ public class DatabaseService
             if (dir != null && !Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
+            bool customIsUtf8 = CustomOverrides?.CustomFactionUTF8 == true;
             targetFile = new CardFile
             {
                 FilePath = fullPath,
                 RawLines = new List<string>(),
-                Cards = new List<Card>()
+                Cards = new List<Card>(),
+                FileEncoding = GmlParser.GetCustomEncoding(customIsUtf8)
             };
             CardFiles.Add(targetFile);
         }
@@ -273,6 +288,46 @@ public class DatabaseService
         AllCards.Sort((a, b) => a.CardStat.CompareTo(b.CardStat));
 
         return card;
+    }
+
+    /// <summary>
+    /// Converts all custom faction files from Windows-1251 to UTF-8.
+    /// Returns the number of files converted.
+    /// </summary>
+    public int ConvertCustomFactionsToUnicode()
+    {
+        if (CustomOverrides == null || TextPath == null) return 0;
+
+        var win1251 = GmlParser.GetWin1251Encoding();
+        var utf8NoBom = GmlParser.GetBuiltInEncoding();
+        int converted = 0;
+
+        foreach (var faction in CustomOverrides.Factions)
+        {
+            var filePath = Path.Combine(TextPath, faction.FileName);
+            if (!File.Exists(filePath)) continue;
+
+            // Read bytes, decode as Win-1251, normalize line endings, re-encode as UTF-8 (no BOM)
+            var bytes = File.ReadAllBytes(filePath);
+            var text = win1251.GetString(bytes);
+            text = text.Replace("\r\n", "\n");
+            var utf8Bytes = utf8NoBom.GetBytes(text);
+            File.WriteAllBytes(filePath, utf8Bytes);
+
+            // Update the encoding on any loaded CardFile
+            var cardFile = CardFiles.FirstOrDefault(f =>
+                Path.GetFileName(f.FilePath).Equals(Path.GetFileName(faction.FileName), StringComparison.OrdinalIgnoreCase));
+            if (cardFile != null)
+                cardFile.FileEncoding = utf8NoBom;
+
+            converted++;
+        }
+
+        // Set the flag and save Custom Overrides
+        CustomOverrides.CustomFactionUTF8 = true;
+        GmlWriter.WriteCustomOverrides(TextPath, CustomOverrides);
+
+        return converted;
     }
 
     /// <summary>

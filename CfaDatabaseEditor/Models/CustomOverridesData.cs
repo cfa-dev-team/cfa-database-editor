@@ -23,6 +23,13 @@ public class CustomOverridesData
     public int? CustomCardStartId { get; set; }
 
     /// <summary>
+    /// When true, custom faction files are encoded in UTF-8.
+    /// When false or null, they use Windows-1251.
+    /// Defaults to true when creating new custom factions from scratch.
+    /// </summary>
+    public bool? CustomFactionUTF8 { get; set; }
+
+    /// <summary>
     /// Lines from Custom Overrides.txt that are NOT faction-related or AllCard,
     /// preserved so we don't lose other user overrides when rewriting.
     /// </summary>

@@ -7,14 +7,18 @@ namespace CfaDatabaseEditor.Services;
 public static class GmlParser
 {
     private static readonly Encoding Win1251 = Encoding.GetEncoding(1251);
+    private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
-    public static CardFile ParseFile(string filePath)
+    public static CardFile ParseFile(string filePath) => ParseFile(filePath, Utf8NoBom);
+
+    public static CardFile ParseFile(string filePath, Encoding encoding)
     {
-        var lines = File.ReadAllLines(filePath, Win1251).ToList();
+        var lines = File.ReadAllLines(filePath, encoding).ToList();
         var cardFile = new CardFile
         {
             FilePath = filePath,
-            RawLines = lines
+            RawLines = lines,
+            FileEncoding = encoding
         };
 
         var cards = new List<Card>();
@@ -368,7 +372,7 @@ public static class GmlParser
         foreach (var card in allCards)
             cardLookup[card.CardStat] = card;
 
-        var lines = File.ReadAllLines(filePath, Win1251);
+        var lines = File.ReadAllLines(filePath, Utf8NoBom);
         var regex = new Regex(@"^global\.(PowerStat|DefensePowerStat)\[(\d+)\]\s*=\s*(-?\d+)");
 
         foreach (var line in lines)
@@ -404,7 +408,7 @@ public static class GmlParser
         var noUsePath = Path.Combine(textFolderPath, "NoUse.txt");
         if (!File.Exists(noUsePath)) return 0;
 
-        var content = File.ReadAllText(noUsePath, Win1251);
+        var content = File.ReadAllText(noUsePath, Utf8NoBom);
         var match = Regex.Match(content, @"global\.AllCard\s*=\s*(\d+)");
         return match.Success ? int.Parse(match.Groups[1].Value) : 0;
     }
@@ -418,8 +422,25 @@ public static class GmlParser
         var filePath = Path.Combine(textFolderPath, "Custom Overrides.txt");
         if (!File.Exists(filePath)) return null;
 
-        var lines = File.ReadAllLines(filePath, Win1251);
+        // First pass: read with Win-1251 to detect the CustomFactionUTF8 flag.
+        // All GML keywords are ASCII, so this works regardless of actual encoding.
+        var reUtf8Flag = new Regex(@"^global\.CustomFactionUTF8\s*=\s*(true|false)", RegexOptions.IgnoreCase);
+        bool isUtf8 = false;
+        foreach (var rawLine in File.ReadAllLines(filePath, Win1251))
+        {
+            var um = reUtf8Flag.Match(rawLine.Trim());
+            if (um.Success)
+            {
+                isUtf8 = um.Groups[1].Value.Equals("true", StringComparison.OrdinalIgnoreCase);
+                break;
+            }
+        }
+
+        // Second pass: re-read with the correct encoding so faction names decode properly
+        var encoding = isUtf8 ? Utf8NoBom : Win1251;
+        var lines = File.ReadAllLines(filePath, encoding);
         var data = new CustomOverridesData();
+        data.CustomFactionUTF8 = isUtf8 ? true : null; // null means flag not present
 
         // Temporary dictionaries keyed by index
         var clanIds = new Dictionary<int, int>();
@@ -468,6 +489,10 @@ public static class GmlParser
             m = reCustomStartId.Match(trimmed);
             if (m.Success) { data.CustomCardStartId = int.Parse(m.Groups[1].Value); matched = true; }
 
+            // CustomFactionUTF8 is a known field, don't put it in OtherLines
+            m = reUtf8Flag.Match(trimmed);
+            if (m.Success) { matched = true; }
+
             if (!matched)
                 data.OtherLines.Add(line);
         }
@@ -496,5 +521,12 @@ public static class GmlParser
         return data;
     }
 
-    public static Encoding GetEncoding() => Win1251;
+    /// <summary>Returns UTF-8 (no BOM) encoding used for built-in files.</summary>
+    public static Encoding GetBuiltInEncoding() => Utf8NoBom;
+
+    /// <summary>Returns the encoding for custom faction files based on the UTF-8 flag.</summary>
+    public static Encoding GetCustomEncoding(bool isUtf8) => isUtf8 ? Utf8NoBom : Win1251;
+
+    /// <summary>Returns the Windows-1251 encoding (for validation and conversion).</summary>
+    public static Encoding GetWin1251Encoding() => Win1251;
 }

@@ -2,7 +2,7 @@
 
 Desktop application for editing the [CFA (Cardfight!! Area)](https://github.com/uniquekid/cfa-texts) card database. Built with Avalonia UI and .NET 8.
 
-**Version 1.1.0 beta** | Developed by Sieg, 2026
+**Version 1.1.1 beta** | Developed by Sieg, 2026
 
 ## Features
 
@@ -15,7 +15,8 @@ Desktop application for editing the [CFA (Cardfight!! Area)](https://github.com/
 - **EN Database Sync** - Scrape official English card data from en.cf-vanguard.com, match to CFA cards by artwork similarity (perceptual hashing), and update names/images
 - **JP Card Archive** - Scrape card images from the JP "Today's Card" archive and bulk-import them as new cards with nation/clan assignment
 - **MD5 Checksums** - Automatic regeneration of `.md5sums` files on save (custom card images are excluded)
-- **Windows-1251 Encoding** - Full support for the CFA database's encoding, with automatic apostrophe sanitization on save and encoding issue warnings
+- **Unicode Support** - Built-in files are read/written as UTF-8. Custom faction files support both UTF-8 and Windows-1251 encoding, controlled by the `global.CustomFactionUTF8` flag in `Custom Overrides.txt`. New custom factions default to UTF-8. A one-click conversion tool (Tools > Convert Custom Factions to Unicode) converts legacy Win-1251 custom files to UTF-8
+- **Windows-1251 Charset Validation** - The in-game font only supports Windows-1251 characters, so encoding issue warnings and automatic apostrophe sanitization on save remain in place regardless of file encoding
 
 ## Prerequisites
 
@@ -84,7 +85,11 @@ Open **Tools > Custom Factions...** to manage custom clans and nations. The edit
 - **Editable card IDs** — Custom cards have editable Card IDs in the editor (validated for uniqueness).
 - **File names** — Each faction maps to a `.txt` file in the `Text/` folder. Subfolder paths are supported (e.g. `MyFolder/Custom Clan.txt`).
 
-On save, the editor writes faction definitions, `global.MaxCustomFaction`, `global.CustomCardStartId`, and `global.AllCard` to `Custom Overrides.txt`. Other lines in the file are preserved.
+On save, the editor writes faction definitions, `global.MaxCustomFaction`, `global.CustomCardStartId`, `global.AllCard`, and `global.CustomFactionUTF8` to `Custom Overrides.txt`. Other lines in the file are preserved.
+
+### Converting Custom Factions to Unicode
+
+If you have existing custom faction files encoded in Windows-1251, use **Tools > Convert Custom Factions to Unicode** to convert them to UTF-8. This reads each file as Win-1251, normalizes line endings, and re-writes it as UTF-8 (no BOM). The `global.CustomFactionUTF8 = true` flag is set in `Custom Overrides.txt` automatically. New custom factions created from scratch already default to UTF-8.
 
 ### EN Database Sync
 

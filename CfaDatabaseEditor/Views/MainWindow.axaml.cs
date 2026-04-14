@@ -45,6 +45,7 @@ public partial class MainWindow : Window
         if (path == null) return;
         await vm.LoadFromPathAsync(path);
         RebuildCustomFactionMenuItems(vm);
+        UpdateConvertUnicodeMenuState();
     }
 
     private async void OnReplaceImageClick(object? sender, RoutedEventArgs e)
@@ -128,7 +129,80 @@ public partial class MainWindow : Window
         {
             vm.RefreshAfterCustomFactionChange();
             RebuildCustomFactionMenuItems(vm);
+            UpdateConvertUnicodeMenuState();
             vm.StatusText = "Custom factions updated. Save the database to persist.";
+        }
+    }
+
+    private void UpdateConvertUnicodeMenuState()
+    {
+        if (DataContext is not MainWindowViewModel vm || !vm.Database.IsLoaded)
+        {
+            ConvertUnicodeMenuItem.IsEnabled = false;
+            return;
+        }
+
+        var overrides = vm.Database.CustomOverrides;
+        // Enable only when custom factions exist and UTF-8 is not already enabled
+        ConvertUnicodeMenuItem.IsEnabled = overrides != null
+            && overrides.Factions.Count > 0
+            && overrides.CustomFactionUTF8 != true;
+    }
+
+    private async void OnConvertUnicodeClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm || !vm.Database.IsLoaded) return;
+
+        var confirm = new Window
+        {
+            Title = "Convert to Unicode",
+            Width = 440,
+            Height = 200,
+            CanResize = false,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+
+        bool confirmed = false;
+        var panel = new StackPanel
+        {
+            Margin = new Avalonia.Thickness(20),
+            Spacing = 10
+        };
+        panel.Children.Add(new TextBlock
+        {
+            Text = "This will convert all custom faction files from Windows-1251\nencoding to UTF-8. This cannot be undone.\n\nContinue?",
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            FontSize = 13
+        });
+
+        var buttonPanel = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+            Spacing = 8
+        };
+        var okButton = new Button { Content = "Convert", Width = 100 };
+        var cancelButton = new Button { Content = "Cancel", Width = 80 };
+        okButton.Click += (_, _) => { confirmed = true; confirm.Close(); };
+        cancelButton.Click += (_, _) => confirm.Close();
+        buttonPanel.Children.Add(okButton);
+        buttonPanel.Children.Add(cancelButton);
+        panel.Children.Add(buttonPanel);
+        confirm.Content = panel;
+
+        await confirm.ShowDialog(this);
+
+        if (!confirmed) return;
+
+        try
+        {
+            int count = vm.Database.ConvertCustomFactionsToUnicode();
+            vm.StatusText = $"Converted {count} custom faction file(s) to UTF-8.";
+            UpdateConvertUnicodeMenuState();
+        }
+        catch (Exception ex)
+        {
+            vm.StatusText = $"Conversion error: {ex.Message}";
         }
     }
 
@@ -287,7 +361,7 @@ public partial class MainWindow : Window
         });
         panel.Children.Add(new TextBlock
         {
-            Text = "Version 1.1.0 beta",
+            Text = "Version 1.1.1 beta",
             FontSize = 13,
             Foreground = Avalonia.Media.Brushes.Gray
         });

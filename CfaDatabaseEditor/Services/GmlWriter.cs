@@ -219,7 +219,7 @@ public static class GmlWriter
     /// </summary>
     public static void WriteCardFile(CardFile cardFile)
     {
-        var encoding = GmlParser.GetEncoding();
+        var encoding = cardFile.FileEncoding;
         var lines = new List<string>(cardFile.RawLines);
 
         // Process cards in reverse order of SourceLineStart to avoid line number shifts
@@ -279,7 +279,7 @@ public static class GmlWriter
     /// </summary>
     public static void UpdateAllCard(string textFolderPath, int newValue)
     {
-        var encoding = GmlParser.GetEncoding();
+        var encoding = GmlParser.GetBuiltInEncoding();
         var noUsePath = Path.Combine(textFolderPath, "NoUse.txt");
         if (!File.Exists(noUsePath)) return;
 
@@ -297,7 +297,8 @@ public static class GmlWriter
     /// </summary>
     public static void WriteCustomOverrides(string textFolderPath, CustomOverridesData data)
     {
-        var encoding = GmlParser.GetEncoding();
+        bool isUtf8 = data.CustomFactionUTF8 == true;
+        var encoding = GmlParser.GetCustomEncoding(isUtf8);
         var filePath = Path.Combine(textFolderPath, "Custom Overrides.txt");
 
         var sb = new StringBuilder();
@@ -334,6 +335,10 @@ public static class GmlWriter
         // Write AllCard override if present
         if (data.AllCardOverride.HasValue)
             sb.AppendLine($"global.AllCard = {data.AllCardOverride.Value}");
+
+        // Write CustomFactionUTF8 flag
+        if (data.CustomFactionUTF8.HasValue)
+            sb.AppendLine($"global.CustomFactionUTF8 = {(data.CustomFactionUTF8.Value ? "true" : "false")}");
 
         File.WriteAllText(filePath, sb.ToString(), encoding);
     }

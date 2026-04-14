@@ -56,6 +56,8 @@ public partial class CustomFactionsWindow : Window
             _db.CustomCardStartId = startId.Value;
             _db.CustomOverrides ??= new CustomOverridesData();
             _db.CustomOverrides.CustomCardStartId = startId.Value;
+            // New custom factions default to UTF-8
+            _db.CustomOverrides.CustomFactionUTF8 ??= true;
         }
 
         _editingIndex = -1;

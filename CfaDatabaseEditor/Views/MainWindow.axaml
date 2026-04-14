@@ -9,7 +9,7 @@
         mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="800"
         x:Class="CfaDatabaseEditor.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="CFA Database Editor v1.1.0 beta"
+        Title="CFA Database Editor v1.1.1 beta"
         Icon="avares://CfaDatabaseEditor/Assets/CFADBE.ico"
         Width="1400" Height="850"
         MinWidth="900" MinHeight="600">
@@ -47,6 +47,7 @@
             </MenuItem>
             <MenuItem Header="_Tools">
                 <MenuItem Header="Custom _Factions..." Click="OnCustomFactionsClick"/>
+                <MenuItem x:Name="ConvertUnicodeMenuItem" Header="Convert Custom Factions to _Unicode" Click="OnConvertUnicodeClick" IsEnabled="False"/>
                 <Separator/>
                 <MenuItem Header="EN Database _Sync..." Click="OnEnSyncClick"/>
                 <MenuItem Header="_JP Card Archive..." Click="OnJpArchiveClick"/>
