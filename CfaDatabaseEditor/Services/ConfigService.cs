@@ -4,10 +4,25 @@ using System.Text.Json.Serialization;
 
 namespace CfaDatabaseEditor.Services;
 
+public class LayoutConfig
+{
+    [JsonPropertyName("leftPanelWidth")]
+    public double? LeftPanelWidth { get; set; }
+
+    [JsonPropertyName("rightPanelWidth")]
+    public double? RightPanelWidth { get; set; }
+
+    [JsonPropertyName("previewImageHeight")]
+    public double? PreviewImageHeight { get; set; }
+}
+
 public class AppConfig
 {
     [JsonPropertyName("recentFolders")]
     public List<string> RecentFolders { get; set; } = new();
+
+    [JsonPropertyName("layout")]
+    public LayoutConfig? Layout { get; set; }
 }
 
 public static class ConfigService

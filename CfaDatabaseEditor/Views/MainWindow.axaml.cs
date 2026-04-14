@@ -16,6 +16,10 @@ public partial class MainWindow : Window
 
     private bool _suppressCardStatChange;
 
+    private const double DefaultLeftPanelWidth = 260;
+    private const double DefaultRightPanelWidth = 310;
+    private const double DefaultPreviewImageHeight = 440;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -25,6 +29,46 @@ public partial class MainWindow : Window
         AddHandler(KeyDownEvent, OnWindowKeyDownTunnel, Avalonia.Interactivity.RoutingStrategies.Tunnel);
 
         CardStatEditor.ValueChanged += OnCardStatValueChanged;
+
+        RestoreLayout();
+    }
+
+    private void RestoreLayout()
+    {
+        var layout = ConfigService.Load().Layout;
+        if (layout == null) return;
+
+        if (layout.LeftPanelWidth.HasValue)
+            MainContentGrid.ColumnDefinitions[0].Width = new GridLength(layout.LeftPanelWidth.Value, GridUnitType.Pixel);
+        if (layout.RightPanelWidth.HasValue)
+            MainContentGrid.ColumnDefinitions[4].Width = new GridLength(layout.RightPanelWidth.Value, GridUnitType.Pixel);
+        if (layout.PreviewImageHeight.HasValue)
+            PreviewGrid.RowDefinitions[0].Height = new GridLength(layout.PreviewImageHeight.Value, GridUnitType.Pixel);
+    }
+
+    private void SaveLayout()
+    {
+        var config = ConfigService.Load();
+        config.Layout = new LayoutConfig
+        {
+            LeftPanelWidth = MainContentGrid.ColumnDefinitions[0].ActualWidth,
+            RightPanelWidth = MainContentGrid.ColumnDefinitions[4].ActualWidth,
+            PreviewImageHeight = PreviewGrid.RowDefinitions[0].ActualHeight
+        };
+        ConfigService.Save(config);
+    }
+
+    protected override void OnClosing(WindowClosingEventArgs e)
+    {
+        SaveLayout();
+        base.OnClosing(e);
+    }
+
+    private void ApplyDefaultLayout()
+    {
+        MainContentGrid.ColumnDefinitions[0].Width = new GridLength(DefaultLeftPanelWidth, GridUnitType.Pixel);
+        MainContentGrid.ColumnDefinitions[4].Width = new GridLength(DefaultRightPanelWidth, GridUnitType.Pixel);
+        PreviewGrid.RowDefinitions[0].Height = new GridLength(DefaultPreviewImageHeight, GridUnitType.Pixel);
     }
 
     private void OnWindowKeyDownTunnel(object? sender, KeyEventArgs e)
@@ -482,6 +526,12 @@ public partial class MainWindow : Window
             };
             archiveWindow.Show();
         }
+    }
+
+    private void OnResetLayoutClick(object? sender, RoutedEventArgs e)
+    {
+        ApplyDefaultLayout();
+        SaveLayout();
     }
 
     private async void OnAboutClick(object? sender, RoutedEventArgs e)

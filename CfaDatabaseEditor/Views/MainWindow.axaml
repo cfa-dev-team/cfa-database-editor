@@ -71,6 +71,8 @@
                 <MenuItem Header="_JP Card Archive..." Click="OnJpArchiveClick"/>
             </MenuItem>
             <MenuItem Header="_Help">
+                <MenuItem Header="_Reset Layout" Click="OnResetLayoutClick"/>
+                <Separator/>
                 <MenuItem Header="_About" Click="OnAboutClick"/>
             </MenuItem>
         </Menu>
@@ -95,7 +97,7 @@
         </Border>
 
         <!-- Main Content -->
-        <Grid ColumnDefinitions="260,Auto,*,Auto,310">
+        <Grid x:Name="MainContentGrid" ColumnDefinitions="260,Auto,*,Auto,310">
 
             <!-- LEFT: Card List Panel -->
             <DockPanel Grid.Column="0" Margin="4">
@@ -499,7 +501,7 @@
             <GridSplitter Grid.Column="3" Width="4" ResizeDirection="Columns"/>
 
             <!-- RIGHT: Preview Panel -->
-            <Grid Grid.Column="4" Margin="4" RowDefinitions="440,4,*">
+            <Grid x:Name="PreviewGrid" Grid.Column="4" Margin="4" RowDefinitions="440,4,*">
                 <!-- Card Image + Actions -->
                 <DockPanel Grid.Row="0" MinHeight="100">
                     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
