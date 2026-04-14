@@ -12,12 +12,20 @@ namespace CfaDatabaseEditor.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly DatabaseService _db = new();
+    private readonly GitService _git = new();
     private ImageService? _imageService;
     private List<Card> _allCardsList = new();
 
     // Status
     [ObservableProperty] private string _statusText = "No database loaded";
     [ObservableProperty] private bool _isLoaded;
+
+    // Git
+    [ObservableProperty] private string _gitBranchDisplay = "";
+    [ObservableProperty] private Avalonia.Media.IBrush _gitBranchColor = Avalonia.Media.Brushes.Gray;
+    [ObservableProperty] private bool _isGitRepo;
+
+    public GitService Git => _git;
 
     // Card list
     [ObservableProperty] private ObservableCollection<Card> _filteredCards = new();
@@ -160,6 +168,9 @@ public partial class MainWindowViewModel : ViewModelBase
             ApplyFilters();
             Program.Log?.WriteLine($"[INFO] ApplyFilters done, FilteredCards.Count={FilteredCards.Count}");
             StatusText = $"{_db.AllCards.Count} cards loaded from {_db.CardFiles.Count} files";
+
+            // Initialise git (non-blocking — if git isn't available, fields stay hidden)
+            await InitGitAsync(path);
         }
         catch (Exception ex)
         {
@@ -414,6 +425,60 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         RebuildFilterOptions();
         ApplyFilters();
+    }
+
+    // ── Git ──
+
+    public async Task InitGitAsync(string path)
+    {
+        try
+        {
+            await _git.InitAsync(path);
+            IsGitRepo = _git.IsRepository;
+            UpdateGitBranchDisplay();
+        }
+        catch (Exception ex)
+        {
+            Program.Log?.WriteLine($"[WARN] Git init failed: {ex.Message}");
+            IsGitRepo = false;
+        }
+    }
+
+    public async Task RefreshGitStatusAsync()
+    {
+        if (!_git.IsRepository) return;
+        await _git.RefreshStatusAsync();
+        UpdateGitBranchDisplay();
+    }
+
+    private void UpdateGitBranchDisplay()
+    {
+        if (!_git.IsRepository)
+        {
+            GitBranchDisplay = "";
+            return;
+        }
+
+        var display = $"\ue0a0 {_git.CurrentBranch}"; // branch icon
+        if (_git.AheadCount > 0) display += $" \u2191{_git.AheadCount}";
+        if (_git.BehindCount > 0) display += $" \u2193{_git.BehindCount}";
+        if (_git.HasChanges) display += " *";
+        GitBranchDisplay = display;
+
+        // Color: green = clean, yellow = dirty, blue = ahead/behind
+        if (_git.HasChanges)
+            GitBranchColor = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#E65100"));
+        else if (_git.AheadCount > 0 || _git.BehindCount > 0)
+            GitBranchColor = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#1565C0"));
+        else
+            GitBranchColor = new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse("#2E7D32"));
+    }
+
+    /// <summary>Reload the database from the same path (used after checkout/pull).</summary>
+    public async Task ReloadDatabaseAsync()
+    {
+        if (_db.RootPath == null) return;
+        await LoadFromPathAsync(_db.RootPath);
     }
 
     private void ApplyFilters()

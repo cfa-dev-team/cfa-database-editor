@@ -230,6 +230,108 @@ public partial class MainWindow : Window
         return result;
     }
 
+    // ── Git handlers ──
+
+    private async void OnGitFetchClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        vm.StatusText = "Fetching...";
+        var result = await vm.Git.FetchAsync();
+        if (result.Success)
+        {
+            await vm.RefreshGitStatusAsync();
+            vm.StatusText = "Fetch completed.";
+        }
+        else
+        {
+            vm.StatusText = $"Fetch failed: {result.Error.Trim()}";
+        }
+    }
+
+    private async void OnGitPullClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        vm.StatusText = "Pulling...";
+        var result = await vm.Git.PullAsync();
+        if (result.Success)
+        {
+            vm.StatusText = "Pull completed. Reloading database...";
+            await vm.ReloadDatabaseAsync();
+            await vm.RefreshGitStatusAsync();
+        }
+        else
+        {
+            vm.StatusText = $"Pull failed: {result.Error.Trim()}";
+        }
+    }
+
+    private async void OnGitPushClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        vm.StatusText = "Pushing...";
+        var result = await vm.Git.PushAsync();
+        if (result.Success)
+        {
+            await vm.RefreshGitStatusAsync();
+            vm.StatusText = "Push completed.";
+        }
+        else
+        {
+            vm.StatusText = $"Push failed: {result.Error.Trim()}";
+        }
+    }
+
+    private async void OnGitCommitClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        var commitWindow = new GitCommitWindow(vm.Git);
+        await commitWindow.ShowDialog(this);
+        if (commitWindow.CommitWasMade)
+        {
+            await vm.RefreshGitStatusAsync();
+            vm.StatusText = "Commit created.";
+        }
+    }
+
+    private async void OnGitCheckoutClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        var branchWindow = new GitBranchWindow(vm.Git);
+        await branchWindow.ShowDialog(this);
+        if (branchWindow.CheckedOutBranch != null)
+        {
+            vm.StatusText = $"Switched to {branchWindow.CheckedOutBranch}. Reloading database...";
+            await vm.ReloadDatabaseAsync();
+            await vm.RefreshGitStatusAsync();
+        }
+    }
+
+    private async void OnGitRefreshClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        await vm.RefreshGitStatusAsync();
+        vm.StatusText = "Git status refreshed.";
+    }
+
+    private async void OnGitBranchClick(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+    {
+        // Clicking the branch name in the status bar opens the checkout window
+        await OnGitCheckoutClickAsync();
+    }
+
+    private async Task OnGitCheckoutClickAsync()
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        var branchWindow = new GitBranchWindow(vm.Git);
+        await branchWindow.ShowDialog(this);
+        if (branchWindow.CheckedOutBranch != null)
+        {
+            vm.StatusText = $"Switched to {branchWindow.CheckedOutBranch}. Reloading database...";
+            await vm.ReloadDatabaseAsync();
+            await vm.RefreshGitStatusAsync();
+        }
+    }
+
     private void OnExitClick(object? sender, RoutedEventArgs e)
     {
         Close();

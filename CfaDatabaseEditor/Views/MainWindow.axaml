@@ -45,6 +45,16 @@
                 </MenuItem>
                 <MenuItem x:Name="DuplicateMenuItem" Header="_Duplicate" Command="{Binding DuplicateCardCommand}"/>
             </MenuItem>
+            <MenuItem Header="_Git" x:Name="GitMenu" IsVisible="{Binding IsGitRepo}">
+                <MenuItem Header="_Fetch" Click="OnGitFetchClick"/>
+                <MenuItem Header="P_ull" Click="OnGitPullClick"/>
+                <MenuItem Header="_Push" Click="OnGitPushClick"/>
+                <Separator/>
+                <MenuItem Header="_Commit..." Click="OnGitCommitClick"/>
+                <MenuItem Header="Checkout _Branch..." Click="OnGitCheckoutClick"/>
+                <Separator/>
+                <MenuItem Header="_Refresh Status" Click="OnGitRefreshClick"/>
+            </MenuItem>
             <MenuItem Header="_Tools">
                 <MenuItem Header="Custom _Factions..." Click="OnCustomFactionsClick"/>
                 <Separator/>
@@ -58,7 +68,21 @@
 
         <!-- Status Bar -->
         <Border DockPanel.Dock="Bottom" Background="#F0F0F0" Padding="8,4">
-            <TextBlock Text="{Binding StatusText}" FontSize="12"/>
+            <DockPanel>
+                <!-- Git branch indicator (right side, VS Code style) -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4"
+                            IsVisible="{Binding IsGitRepo}" Margin="12,0,0,0">
+                    <TextBlock Text="{Binding GitBranchDisplay}"
+                               Foreground="{Binding GitBranchColor}"
+                               FontSize="12" FontWeight="SemiBold"
+                               VerticalAlignment="Center"
+                               Cursor="Hand"
+                               PointerPressed="OnGitBranchClick"/>
+                </StackPanel>
+                <!-- Status text (left side) -->
+                <TextBlock Text="{Binding StatusText}" FontSize="12"
+                           TextTrimming="CharacterEllipsis"/>
+            </DockPanel>
         </Border>
 
         <!-- Main Content -->
