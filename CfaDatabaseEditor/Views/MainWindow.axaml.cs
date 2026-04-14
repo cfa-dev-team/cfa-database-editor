@@ -386,7 +386,11 @@ public partial class MainWindow : Window
         if (DataContext is not MainWindowViewModel vm) return;
         var commitWindow = new GitCommitWindow(vm.Git);
         await commitWindow.ShowDialog(this);
-        if (commitWindow.CommitWasMade)
+        if (commitWindow.FilesWereDiscarded)
+        {
+            await vm.ReloadDatabaseAsync();
+        }
+        else if (commitWindow.CommitWasMade)
         {
             await vm.RefreshGitStatusAsync();
             vm.StatusText = "Commit created.";

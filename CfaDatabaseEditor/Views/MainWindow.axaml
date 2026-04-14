@@ -59,7 +59,7 @@
                 <MenuItem Header="P_ull" Click="OnGitPullClick"/>
                 <MenuItem Header="_Push" Click="OnGitPushClick"/>
                 <Separator/>
-                <MenuItem Header="_Commit..." Click="OnGitCommitClick"/>
+                <MenuItem Header="_Commit / Discard..." Click="OnGitCommitClick"/>
                 <MenuItem Header="Checkout _Branch..." Click="OnGitCheckoutClick"/>
                 <Separator/>
                 <MenuItem Header="_Refresh Status" Click="OnGitRefreshClick"/>

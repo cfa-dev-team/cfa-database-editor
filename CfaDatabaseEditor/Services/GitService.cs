@@ -154,6 +154,22 @@ public class GitService
     public Task<GitResult> StageAllAsync()
         => RunAsync("add", "-A");
 
+    /// <summary>Discard changes for a specific file (restore to HEAD).</summary>
+    public async Task<GitResult> DiscardFileAsync(GitFileStatus file)
+    {
+        if (file.IndexStatus == '?' && file.WorkTreeStatus == '?')
+        {
+            // Untracked file — remove it
+            return await RunAsync("clean", "-f", "--", file.FilePath);
+        }
+
+        // Unstage first if staged, then restore working tree
+        if (file.IsStaged)
+            await RunAsync("reset", "HEAD", "--", file.FilePath);
+
+        return await RunAsync("checkout", "HEAD", "--", file.FilePath);
+    }
+
     /// <summary>Commit with the given message.</summary>
     public Task<GitResult> CommitAsync(string message)
         => RunAsync("commit", "-m", message);

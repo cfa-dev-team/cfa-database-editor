@@ -16,6 +16,9 @@ public partial class GitCommitWindow : Window
     /// <summary>True if a commit was made, so the caller knows to refresh.</summary>
     public bool CommitWasMade { get; private set; }
 
+    /// <summary>True if files were discarded, so the caller knows to reload the database.</summary>
+    public bool FilesWereDiscarded { get; private set; }
+
     public GitCommitWindow()
     {
         InitializeComponent();
@@ -31,7 +34,14 @@ public partial class GitCommitWindow : Window
     protected override async void OnOpened(EventArgs e)
     {
         base.OnOpened(e);
-        await RefreshFileListAsync();
+        try
+        {
+            await RefreshFileListAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Error loading git status: {ex.Message}";
+        }
     }
 
     private async Task RefreshFileListAsync()
@@ -45,12 +55,18 @@ public partial class GitCommitWindow : Window
             FileListPanel.Children.Add(new TextBlock
             {
                 Text = "No changes detected.",
-                Foreground = (IBrush)(this.FindResource("SubtleTextBrush") ?? Brushes.Gray),
+                Foreground = this.FindResource("SubtleTextBrush") as IBrush ?? Brushes.Gray,
                 Margin = new Thickness(8)
             });
             CommitButton.IsEnabled = false;
+            DiscardButton.IsEnabled = false;
+            StageAllButton.IsEnabled = false;
+            UnstageAllButton.IsEnabled = false;
             return;
         }
+
+        StageAllButton.IsEnabled = true;
+        UnstageAllButton.IsEnabled = true;
 
         foreach (var file in _files)
         {
@@ -92,7 +108,7 @@ public partial class GitCommitWindow : Window
             FileListPanel.Children.Add(panel);
         }
 
-        UpdateCommitButton();
+        UpdateButtons();
     }
 
     private static IBrush GetStatusBrush(GitFileStatus file)
@@ -119,7 +135,7 @@ public partial class GitCommitWindow : Window
             await _git.UnstageFileAsync(file.FilePath);
 
         file.IsStaged = isChecked;
-        UpdateCommitButton();
+        UpdateButtons();
     }
 
     private async void OnStageAllClick(object? sender, RoutedEventArgs e)
@@ -136,6 +152,39 @@ public partial class GitCommitWindow : Window
                 await _git.UnstageFileAsync(file.FilePath);
         }
         await RefreshFileListAsync();
+    }
+
+    private async void OnDiscardClick(object? sender, RoutedEventArgs e)
+    {
+        var selected = _checkBoxes
+            .Where(kv => kv.Value.IsChecked == true)
+            .Select(kv => kv.Value.Tag as GitFileStatus)
+            .Where(f => f != null)
+            .ToList();
+
+        if (selected.Count == 0)
+        {
+            StatusLabel.Text = "No files selected to discard.";
+            return;
+        }
+
+        DiscardButton.IsEnabled = false;
+        StatusLabel.Text = $"Discarding {selected.Count} file(s)...";
+
+        var errors = new List<string>();
+        foreach (var file in selected)
+        {
+            var result = await _git.DiscardFileAsync(file!);
+            if (!result.Success)
+                errors.Add($"{file!.FilePath}: {result.Error.Trim()}");
+        }
+
+        FilesWereDiscarded = true;
+        await RefreshFileListAsync();
+
+        StatusLabel.Text = errors.Count > 0
+            ? $"Discarded with errors: {string.Join("; ", errors)}"
+            : $"Discarded {selected.Count} file(s).";
     }
 
     private async void OnCommitClick(object? sender, RoutedEventArgs e)
@@ -180,13 +229,17 @@ public partial class GitCommitWindow : Window
 
     private void OnCommitMessageChanged(object? sender, TextChangedEventArgs e)
     {
-        UpdateCommitButton();
+        UpdateButtons();
     }
 
-    private void UpdateCommitButton()
+    private void UpdateButtons()
     {
         var hasMessage = !string.IsNullOrWhiteSpace(CommitMessageBox.Text);
-        var hasStaged = _checkBoxes.Values.Any(cb => cb.IsChecked == true);
+        var hasChecked = _checkBoxes.Values.Any(cb => cb.IsChecked == true);
+        var hasStaged = _files.Any(f => f.IsStaged) &&
+                        _checkBoxes.Where(kv => kv.Value.IsChecked == true)
+                            .Any(kv => kv.Value.Tag is GitFileStatus { IsStaged: true });
         CommitButton.IsEnabled = hasMessage && hasStaged;
+        DiscardButton.IsEnabled = hasChecked;
     }
 }
