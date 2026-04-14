@@ -7,11 +7,14 @@ Desktop application for editing the [CFA (Cardfight!! Area)](https://github.com/
 ## Features
 
 - **Card Editor** - Edit all card properties (name, text, grade, power, shield, nation, clan, triggers, persona ride, token generators, search effects, arms, legality, and 50+ more fields)
-- **Card List** - Browse all 15,000+ cards with search (by name, text, or ID) and filtering (by nation, clan, grade, or absence of nation/clan)
+- **Card List** - Browse all 15,000+ cards with search (by name, text, or ID) and filtering (by nation, clan, grade, or absence of nation/clan). Scroll-to-top/bottom buttons for quick navigation
 - **Custom Clans & Nations** - Full support for CFA's custom factions system. Create and manage custom clans/nations via a visual dialog, add cards to them with smart ID allocation (configurable start ID, max 31999), and edit custom card IDs. Reads and writes `Custom Overrides.txt` automatically
 - **Duplicate Name Detection** - Warns when a card name is already used by another card (CFA engine limitation) with a one-click fix that appends trailing spaces
 - **Image Management** - View card images, replace/add images with automatic resizing to 300px (CardSprite) and 75px (CardSpriteMini2) JPEG
-- **In-Game Text Preview** - Live preview of card text rendered with the CFA client's icon and formatting pipeline
+- **In-Game Text Preview** - Live preview of card text rendered with the CFA client's icon and formatting pipeline, with correctly sized in-text sprites
+- **Auto-preformat** - One-click button to convert wiki/official card text formatting into CFA-compatible syntax (bracket cleanup, circle bullets, ability keywords, zone abbreviations, etc.)
+- **Git Integration** - Built-in fetch, pull, push, commit, and branch checkout. Branch name and dirty state shown in the status bar
+- **Recent Folders** - Quickly reopen previously loaded databases from the File menu
 - **EN Database Sync** - Scrape official English card data from en.cf-vanguard.com, match to CFA cards by artwork similarity (perceptual hashing), and update names/images
 - **JP Card Archive** - Scrape card images from the JP "Today's Card" archive and bulk-import them as new cards with nation/clan assignment
 - **MD5 Checksums** - Automatic regeneration of `.md5sums` files on save (custom card images are excluded)
@@ -62,7 +65,7 @@ Output is in `CfaDatabaseEditor/bin/Release/net8.0/<rid>/publish/`.
 
 ### Loading the Database
 
-Click `File` -> `Open Database...` to open the folder containing CFA database.
+Click `File` -> `Open Database...` (Ctrl+O) to open the folder containing CFA database. Previously opened folders appear under `File` -> `Recent Folders` for quick access.
 
 ### Editing Cards
 
@@ -100,6 +103,27 @@ On save, the editor writes faction definitions, `global.MaxCustomFaction`, `glob
 
 Select a card, then click **Replace Image** in the right panel. The image is automatically resized to both 300px and 75px variants.
 
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+O | Open database folder |
+| Ctrl+S | Save all modified files |
+| Ctrl+D | Duplicate selected card |
+| Ctrl+R | Reload database from disk |
+| Ctrl+F | Focus search box |
+
+### Git Integration
+
+The **Git** menu appears automatically when the loaded database folder is a git repository. It provides:
+
+- **Fetch / Pull / Push** - Standard remote operations
+- **Commit** - Stage and commit changes with a message dialog
+- **Checkout Branch** - Switch branches (reloads the database automatically)
+- **Refresh Status** - Update the branch/dirty indicator in the status bar
+
+The current branch name and sync status are shown in the bottom-right status bar. Click it to open the branch checkout dialog.
+
 ## Project Structure
 
 ```
@@ -107,10 +131,11 @@ CfaDatabaseEditor/
   CfaDatabaseEditor/
     Models/          Card data model, clan/nation registry, custom overrides data
     Services/        GML parser/writer, database service, image matching,
-                     web scraper, text preprocessor, card text renderer
+                     web scraper, text preprocessor, card text renderer,
+                     git operations, app config (config.json)
     ViewModels/      MVVM view models for main window, EN sync, JP archive
     Views/           Avalonia XAML views (main window, EN sync, JP archive,
-                     custom factions dialog)
+                     custom factions dialog, git commit/branch dialogs)
     Controls/        Custom card text preview control
     Converters/      Value converters for UI bindings
     Helpers/         MD5 checksum generator

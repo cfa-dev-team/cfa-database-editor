@@ -79,7 +79,7 @@ public partial class MainWindow : Window
     private void OnRecentMenuOpened(object? sender, RoutedEventArgs e)
     {
         RecentMenu.Items.Clear();
-        var recent = Services.RecentFoldersService.Load();
+        var recent = Services.ConfigService.GetRecentFolders();
         if (recent.Count == 0)
         {
             RecentMenu.Items.Add(new MenuItem { Header = "(empty)", IsEnabled = false });
