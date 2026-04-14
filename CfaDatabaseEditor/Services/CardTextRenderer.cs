@@ -160,7 +160,6 @@ public class CardTextRenderer
 
         // Word-wrap title to 280px width, line sep = 18
         var words = title.Split(' ');
-        float cx = 0;
         float cy = y + TitleFontSize;
         var line = "";
 

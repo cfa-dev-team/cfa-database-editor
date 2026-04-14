@@ -24,13 +24,13 @@
         </DockPanel>
 
         <!-- Status -->
-        <TextBlock x:Name="StatusLabel" DockPanel.Dock="Bottom" FontSize="11" Foreground="Gray"
+        <TextBlock x:Name="StatusLabel" DockPanel.Dock="Bottom" FontSize="11" Foreground="{DynamicResource SubtleTextBrush}"
                    Margin="0,4,0,0" TextWrapping="Wrap"/>
 
         <!-- File list -->
         <DockPanel>
             <TextBlock DockPanel.Dock="Top" Text="Changed Files:" FontWeight="SemiBold" Margin="0,0,0,4"/>
-            <Border BorderBrush="#CCC" BorderThickness="1" CornerRadius="4">
+            <Border BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1" CornerRadius="4">
                 <ScrollViewer>
                     <StackPanel x:Name="FileListPanel" Spacing="2" Margin="4"/>
                 </ScrollViewer>

@@ -24,10 +24,10 @@
                          Watermark="https://en.cf-vanguard.com/cardlist/cardsearch/?expansion=248"/>
             </DockPanel>
             <DockPanel>
-                <TextBlock Text="{Binding ProgressText}" Foreground="Gray" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding ProgressText}" Foreground="{DynamicResource SubtleTextBrush}" VerticalAlignment="Center"/>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4">
-                    <Border Width="12" Height="12" Background="#FFDDDD" BorderBrush="Red" BorderThickness="1" CornerRadius="2" VerticalAlignment="Center"/>
-                    <TextBlock Text="= encoding issue" FontSize="11" Foreground="Gray" VerticalAlignment="Center"/>
+                    <Border Width="12" Height="12" Background="{DynamicResource EncodingIssueBrush}" BorderBrush="Red" BorderThickness="1" CornerRadius="2" VerticalAlignment="Center"/>
+                    <TextBlock Text="= encoding issue" FontSize="11" Foreground="{DynamicResource SubtleTextBrush}" VerticalAlignment="Center"/>
                 </StackPanel>
             </DockPanel>
         </StackPanel>
@@ -103,18 +103,18 @@
             <GridSplitter Grid.Column="1" Width="4" ResizeDirection="Columns"/>
 
             <!-- RIGHT: Image Comparison -->
-            <Border Grid.Column="2" Background="#F5F5F5" CornerRadius="4" Padding="8">
+            <Border Grid.Column="2" Background="{DynamicResource InfoPanelBackgroundBrush}" CornerRadius="4" Padding="8">
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top" Text="Image Comparison" FontWeight="Bold"
                                FontSize="13" Margin="0,0,0,8"/>
 
                     <!-- Selected card info -->
-                    <Border DockPanel.Dock="Top" Background="#E8E8E8" CornerRadius="4" Padding="6" Margin="0,0,0,8"
+                    <Border DockPanel.Dock="Top" Background="{DynamicResource InfoBoxBackgroundBrush}" CornerRadius="4" Padding="6" Margin="0,0,0,8"
                             IsVisible="{Binding SelectedResult, Converter={x:Static ObjectConverters.IsNotNull}}"
                             x:CompileBindings="False">
                         <StackPanel Spacing="2">
                             <TextBlock Text="{Binding SelectedResult.EnName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock FontSize="11" Foreground="Gray">
+                            <TextBlock FontSize="11" Foreground="{DynamicResource SubtleTextBrush}">
                                 <Run Text="Matched to CFA #"/>
                                 <Run Text="{Binding SelectedResult.MatchedCard.CardStat}"/>
                                 <Run Text=" ("/>

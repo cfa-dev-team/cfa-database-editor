@@ -45,7 +45,7 @@ public partial class GitCommitWindow : Window
             FileListPanel.Children.Add(new TextBlock
             {
                 Text = "No changes detected.",
-                Foreground = Brushes.Gray,
+                Foreground = (IBrush)(this.FindResource("SubtleTextBrush") ?? Brushes.Gray),
                 Margin = new Thickness(8)
             });
             CommitButton.IsEnabled = false;

@@ -76,7 +76,7 @@
         </Menu>
 
         <!-- Status Bar -->
-        <Border DockPanel.Dock="Bottom" Background="#F0F0F0" Padding="8,4">
+        <Border DockPanel.Dock="Bottom" Background="{DynamicResource StatusBarBackgroundBrush}" Padding="8,4">
             <DockPanel>
                 <!-- Git branch indicator (right side, VS Code style) -->
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4"
@@ -162,9 +162,9 @@
                                 <Border Width="4" DockPanel.Dock="Left" Margin="0,0,6,0" CornerRadius="2"
                                         Background="{Binding Converter={StaticResource CardColorConv}}"/>
                                 <TextBlock>
-                                    <Run Text="[" FontSize="11" Foreground="Gray"/>
-                                    <Run Text="{Binding CardStat}" FontSize="11" Foreground="Gray"/>
-                                    <Run Text="] " FontSize="11" Foreground="Gray"/>
+                                    <Run Text="[" FontSize="11" Foreground="{DynamicResource SubtleTextBrush}"/>
+                                    <Run Text="{Binding CardStat}" FontSize="11" Foreground="{DynamicResource SubtleTextBrush}"/>
+                                    <Run Text="] " FontSize="11" Foreground="{DynamicResource SubtleTextBrush}"/>
                                     <Run Text="{Binding CardName}"/>
                                 </TextBlock>
                             </DockPanel>
@@ -183,7 +183,7 @@
                 <StackPanel Spacing="4" DataContext="{Binding SelectedCard}" x:DataType="m:Card" x:CompileBindings="False">
 
                     <!-- Core Properties -->
-                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                    <Border Background="{DynamicResource SectionBackgroundBrush}" CornerRadius="4" Padding="8" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                         <StackPanel Spacing="6">
                             <TextBlock Text="Core Properties" FontWeight="Bold" FontSize="14"/>
                             <Grid ColumnDefinitions="100,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
@@ -194,7 +194,7 @@
                                                    IsEnabled="{Binding IsCustomCard}"
                                                    Minimum="1" Maximum="31999" Width="160"
                                                    FontWeight="Bold"/>
-                                    <TextBlock Text="(custom)" FontSize="11" Foreground="#00897B"
+                                    <TextBlock Text="(custom)" FontSize="11" Foreground="{DynamicResource AccentTealBrush}"
                                                VerticalAlignment="Center"
                                                IsVisible="{Binding IsCustomCard}"/>
                                 </StackPanel>
@@ -227,7 +227,7 @@
                                             Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
                                 <TextBlock Text="{Binding DataContext.DuplicateNameWarning,
                                                RelativeSource={RelativeSource AncestorType=Window}}"
-                                           Foreground="#E65100" FontSize="11" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource WarningOrangeBrush}" FontSize="11" TextWrapping="Wrap"
                                            VerticalAlignment="Center"/>
                                 <Button Content="Fix" FontSize="11" Padding="8,2"
                                         Command="{Binding DataContext.FixDuplicateNameCommand,
@@ -238,7 +238,7 @@
                     </Border>
 
                     <!-- Card Text -->
-                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                    <Border Background="{DynamicResource SectionBackgroundBrush}" CornerRadius="4" Padding="8" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                         <StackPanel Spacing="4">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <TextBlock Text="Card Text" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
@@ -251,7 +251,7 @@
                     </Border>
 
                     <!-- Trigger -->
-                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                    <Border Background="{DynamicResource SectionBackgroundBrush}" CornerRadius="4" Padding="8" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                         <StackPanel Spacing="4">
                             <TextBlock Text="Trigger" FontWeight="Bold" FontSize="14"/>
                             <ComboBox SelectedIndex="{Binding TriggerUnit}" Width="200" HorizontalAlignment="Left">
@@ -267,7 +267,7 @@
                     </Border>
 
                     <!-- Persona Ride -->
-                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                    <Border Background="{DynamicResource SectionBackgroundBrush}" CornerRadius="4" Padding="8" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                         <StackPanel Spacing="4">
                             <TextBlock Text="Persona Ride" FontWeight="Bold" FontSize="14"/>
                             <WrapPanel>
@@ -283,17 +283,17 @@
                     </Border>
 
                     <!-- Imaginary Gifts -->
-                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                    <Border Background="{DynamicResource SectionBackgroundBrush}" CornerRadius="4" Padding="8" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                         <StackPanel Spacing="4">
                             <TextBlock Text="Imaginary Gifts" FontWeight="Bold" FontSize="14"/>
-                            <TextBlock Text="On Ride:" FontSize="12" Foreground="Gray"/>
+                            <TextBlock Text="On Ride:" FontSize="12" Foreground="{DynamicResource SubtleTextBrush}"/>
                             <WrapPanel>
                                 <CheckBox Content="Force" IsChecked="{Binding BlueTokenAdd}" Margin="0,0,12,0"/>
                                 <CheckBox Content="Protect" IsChecked="{Binding GreenTokenAdd}" Margin="0,0,12,0"/>
                                 <CheckBox Content="Accel" IsChecked="{Binding OrangeTokenAdd}" Margin="0,0,12,0"/>
                                 <CheckBox Content="Both Force" IsChecked="{Binding BlueTokenBoth}"/>
                             </WrapPanel>
-                            <TextBlock Text="Generators (Shift+Click):" FontSize="12" Foreground="Gray"/>
+                            <TextBlock Text="Generators (Shift+Click):" FontSize="12" Foreground="{DynamicResource SubtleTextBrush}"/>
                             <WrapPanel>
                                 <CheckBox Content="Force" IsChecked="{Binding ForceAdd}" Margin="0,0,12,0"/>
                                 <CheckBox Content="Protect" IsChecked="{Binding ProtectAdd}" Margin="0,0,12,0"/>
@@ -305,7 +305,7 @@
                     </Border>
 
                     <!-- Token Generator -->
-                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                    <Border Background="{DynamicResource SectionBackgroundBrush}" CornerRadius="4" Padding="8" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                         <StackPanel Spacing="4">
                             <TextBlock Text="Token Generator" FontWeight="Bold" FontSize="14"/>
                             <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
@@ -343,7 +343,7 @@
                     </Border>
 
                     <!-- Search Effect -->
-                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                    <Border Background="{DynamicResource SectionBackgroundBrush}" CornerRadius="4" Padding="8" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                         <StackPanel Spacing="4">
                             <TextBlock Text="Search Effect" FontWeight="Bold" FontSize="14"/>
                             <CheckBox Content="Enable Search Effect" IsChecked="{Binding SearchEffect}"/>
@@ -377,7 +377,7 @@
                     </Border>
 
                     <!-- Arms -->
-                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                    <Border Background="{DynamicResource SectionBackgroundBrush}" CornerRadius="4" Padding="8" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                         <StackPanel Spacing="4">
                             <TextBlock Text="Arms" FontWeight="Bold" FontSize="14"/>
                             <WrapPanel>
@@ -390,7 +390,7 @@
                     </Border>
 
                     <!-- Legality & Visibility -->
-                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                    <Border Background="{DynamicResource SectionBackgroundBrush}" CornerRadius="4" Padding="8" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                         <StackPanel Spacing="4">
                             <TextBlock Text="Legality &amp; Visibility" FontWeight="Bold" FontSize="14"/>
                             <WrapPanel>
@@ -408,7 +408,7 @@
                     </Border>
 
                     <!-- Special Mechanics -->
-                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                    <Border Background="{DynamicResource SectionBackgroundBrush}" CornerRadius="4" Padding="8" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                         <StackPanel Spacing="4">
                             <TextBlock Text="Special Mechanics" FontWeight="Bold" FontSize="14"/>
                             <WrapPanel>
@@ -429,7 +429,7 @@
                     </Border>
 
                     <!-- Advanced -->
-                    <Border Background="#F8F8F8" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                    <Border Background="{DynamicResource SectionBackgroundBrush}" CornerRadius="4" Padding="8" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                         <StackPanel Spacing="4">
                             <TextBlock Text="Advanced" FontWeight="Bold" FontSize="14"/>
                             <Grid ColumnDefinitions="120,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
@@ -485,10 +485,10 @@
                     </Border>
 
                     <!-- Source Info -->
-                    <Border Background="#EFEFEF" CornerRadius="4" Padding="8" BorderBrush="#DDD" BorderThickness="1">
+                    <Border Background="{DynamicResource SourceInfoBackgroundBrush}" CornerRadius="4" Padding="8" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                         <StackPanel Orientation="Horizontal" Spacing="16">
-                            <TextBlock Text="{Binding SourceFile, StringFormat='File: {0}'}" FontSize="11" Foreground="Gray"/>
-                            <TextBlock Text="{Binding SourceLineStart, StringFormat='Lines: {0}'}" FontSize="11" Foreground="Gray"/>
+                            <TextBlock Text="{Binding SourceFile, StringFormat='File: {0}'}" FontSize="11" Foreground="{DynamicResource SubtleTextBrush}"/>
+                            <TextBlock Text="{Binding SourceLineStart, StringFormat='Lines: {0}'}" FontSize="11" Foreground="{DynamicResource SubtleTextBrush}"/>
                         </StackPanel>
                     </Border>
 
@@ -519,7 +519,7 @@
                               Background="Transparent"/>
 
                 <!-- In-Game Text Preview -->
-                <Border Grid.Row="2" Background="#FFF" CornerRadius="4" BorderBrush="#DDD" BorderThickness="1">
+                <Border Grid.Row="2" Background="{DynamicResource SectionBackgroundBrush}" CornerRadius="4" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Top" Text="In-Game Text Preview (Reference-Only!)"
                                    FontWeight="Bold" FontSize="12" Margin="8,4,8,2"/>
