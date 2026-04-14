@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -330,6 +331,59 @@ public partial class MainWindow : Window
             await vm.ReloadDatabaseAsync();
             await vm.RefreshGitStatusAsync();
         }
+    }
+
+    private void OnAutoPreformatClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        if (vm.SelectedCard == null || string.IsNullOrEmpty(vm.SelectedCard.CardText)) return;
+
+        var text = vm.SelectedCard.CardText;
+
+        // Separate Brackets
+        text = Regex.Replace(text, @"([\]\)]{1})([\[\(]{1})", "$1 $2");
+
+        // [AUTO] -> AUTO, [ACT] -> ACT, [CONT] -> CONT
+        text = text.Replace("[AUTO]", "AUTO");
+        text = text.Replace("[ACT]", "ACT");
+        text = text.Replace("[CONT]", "CONT");
+
+        // [COST][ -> COST [
+        text = text.Replace("[COST]", "COST");
+
+        // [1/Turn] -> 1/Turn, [1/Fight] -> 1/Fight
+        text = text.Replace("[1/Turn]", "1/Turn");
+        text = text.Replace("[1/Fight]", "1/Fight");
+
+        // [Power] -> power, [Shield] -> shield, [Critical] -> critical
+        text = text.Replace("[Power]", "power");
+        text = text.Replace("[Shield]", "shield");
+        text = text.Replace("[Critical]", "critical");
+
+        // [Stand] -> stand, [Rest] -> rest
+        text = text.Replace("[Stand]", "stand");
+        text = text.Replace("[Rest]", "rest");
+
+        // :RC: -> RC, :VC: -> VC, :GC: -> GC
+        text = text.Replace(":RC:", "RC");
+        text = text.Replace(":VC:", "VC");
+        text = text.Replace(":GC:", "GC");
+
+        // (RC) -> RC, (VC) -> VC, (GC) -> GC
+        text = text.Replace("(RC)", "RC");
+        text = text.Replace("(VC)", "VC");
+        text = text.Replace("(GC)", "GC");
+
+        // Soul-Blast -> Soul Blast, Counter-Charge -> Counter Charge, etc.
+        text = Regex.Replace(text, @"(Soul|Counter|Energy)-(Blast|Charge)", "$1 $2");
+
+        // :\w -> : \w  (colon immediately followed by a word character, add space)
+        text = Regex.Replace(text, @":(\w)", ": $1");
+
+        // (\d) -> \d  (single digit in parentheses, remove the parens)
+        text = Regex.Replace(text, @"\((\d)\)", "$1");
+
+        vm.SelectedCard.CardText = text;
     }
 
     private void OnExitClick(object? sender, RoutedEventArgs e)
