@@ -30,6 +30,7 @@ public static class Md5ChecksumGenerator
     {
         if (!Directory.Exists(folderPath)) return;
 
+        var folderName = Path.GetFileName(folderPath);
         var files = Directory.GetFiles(folderPath)
             .OrderBy(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
             .ToArray();
@@ -46,7 +47,7 @@ public static class Md5ChecksumGenerator
                 continue;
 
             var hash = await ComputeMd5Async(file);
-            sb.AppendLine($"{hash}  .\\{fileName}");
+            sb.AppendLine($"{hash}  .\\{folderName}\\{fileName}");
         }
 
         await File.WriteAllTextAsync(outputPath, sb.ToString());
