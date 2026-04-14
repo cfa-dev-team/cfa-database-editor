@@ -84,17 +84,21 @@ public partial class EnSyncViewModel : ViewModelBase
             var progress = new Progress<string>(s => ProgressText = s);
             await foreach (var scraped in _scraper.ScrapeExpansionAsync(Url, progress))
             {
+                var imageData = scraped.ImageData != null
+                    ? ImageService.FixRotationIfNeeded(scraped.ImageData)
+                    : null;
+
                 var result = new SyncResult
                 {
                     EnName = scraped.Name,
                     EnCardNo = scraped.CardNo,
                     EnImageUrl = scraped.ImageUrl,
-                    EnImageData = scraped.ImageData
+                    EnImageData = imageData
                 };
 
-                if (scraped.ImageData != null && _db != null)
+                if (imageData != null && _db != null)
                 {
-                    var match = _matcher.FindBestMatch(scraped.ImageData);
+                    var match = _matcher.FindBestMatch(imageData);
                     if (match.HasValue)
                     {
                         result.MatchedCard = _db.AllCards.FirstOrDefault(c => c.CardStat == match.Value.CardStat);

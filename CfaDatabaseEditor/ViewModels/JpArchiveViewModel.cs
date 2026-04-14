@@ -65,11 +65,14 @@ public partial class JpArchiveViewModel : ViewModelBase
             var progress = new Progress<string>(s => ProgressText = s);
             await foreach (var scraped in _scraper.ScrapeJpArchiveAsync(Page, progress))
             {
-                Program.Log?.WriteLine($"[JP-ARCHIVE-VM] Got card: url={scraped.ImageUrl}, hasData={scraped.ImageData != null}, dataLen={scraped.ImageData?.Length ?? 0}");
+                var imageData = scraped.ImageData != null
+                    ? ImageService.FixRotationIfNeeded(scraped.ImageData)
+                    : scraped.ImageData;
+                Program.Log?.WriteLine($"[JP-ARCHIVE-VM] Got card: url={scraped.ImageUrl}, hasData={imageData != null}, dataLen={imageData?.Length ?? 0}");
                 var card = new JpArchiveCard
                 {
                     ImageUrl = scraped.ImageUrl,
-                    ImageData = scraped.ImageData,
+                    ImageData = imageData,
                     SelectedNation = NoNationSentinel,
                     SelectedClan = NoClanSentinel
                 };
