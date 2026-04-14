@@ -75,7 +75,7 @@
 
                     <DataGridTextColumn Header="Card No" Binding="{Binding EnCardNo}" Width="160" IsReadOnly="True"/>
                     <DataGridTextColumn Header="CFA Match" Binding="{Binding MatchedCard.CardName}" Width="200" IsReadOnly="True"/>
-                    <DataGridTextColumn Header="CFA ID" Binding="{Binding MatchedCard.CardStat}" Width="88" IsReadOnly="True"/>
+                    <DataGridTextColumn Header="CFA ID" Binding="{Binding MatchedCardStat}" Width="88" IsReadOnly="False"/>
                     <DataGridTextColumn Header="Conf. %" Binding="{Binding Confidence, StringFormat=\{0:F1\}}" Width="96" IsReadOnly="True"/>
 
                     <!-- Approve: clickable checkbox without entering edit mode -->
