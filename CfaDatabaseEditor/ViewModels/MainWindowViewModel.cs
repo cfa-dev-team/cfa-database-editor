@@ -472,7 +472,7 @@ public partial class MainWindowViewModel : ViewModelBase
             return;
         }
 
-        var display = $"\ue0a0 {_git.CurrentBranch}"; // branch icon
+        var display = $"\u2387 {_git.CurrentBranch}"; // branch icon
         if (_git.AheadCount > 0) display += $" \u2191{_git.AheadCount}";
         if (_git.BehindCount > 0) display += $" \u2193{_git.BehindCount}";
         if (_git.HasChanges) display += " *";

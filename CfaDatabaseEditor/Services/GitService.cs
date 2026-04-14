@@ -100,7 +100,7 @@ public class GitService
             if (line.Length < 3) continue;
             var indexStatus = line[0];
             var workTreeStatus = line[1];
-            var path = line.Substring(3).Trim();
+            var path = line.Substring(3).Trim().Trim('"');
 
             // Handle renames: "R  old -> new"
             var displayPath = path;
@@ -157,16 +157,27 @@ public class GitService
     /// <summary>Discard changes for a specific file (restore to HEAD).</summary>
     public async Task<GitResult> DiscardFileAsync(GitFileStatus file)
     {
-        if (file.IndexStatus == '?' && file.WorkTreeStatus == '?')
-        {
-            // Untracked file — remove it
-            return await RunAsync("clean", "-f", "--", file.FilePath);
-        }
-
-        // Unstage first if staged, then restore working tree
+        // Unstage first if staged
         if (file.IsStaged)
             await RunAsync("reset", "HEAD", "--", file.FilePath);
 
+        if (file.IndexStatus == '?' && file.WorkTreeStatus == '?')
+        {
+            // Untracked file — delete from disk
+            try
+            {
+                var fullPath = Path.Combine(_repoPath!, file.FilePath);
+                if (File.Exists(fullPath))
+                    File.Delete(fullPath);
+                return new GitResult { Success = true };
+            }
+            catch (Exception ex)
+            {
+                return new GitResult { Success = false, Error = ex.Message };
+            }
+        }
+
+        // Tracked file — restore to HEAD
         return await RunAsync("checkout", "HEAD", "--", file.FilePath);
     }
 

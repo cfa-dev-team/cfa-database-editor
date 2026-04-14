@@ -60,6 +60,7 @@ public partial class GitCommitWindow : Window
             });
             CommitButton.IsEnabled = false;
             DiscardButton.IsEnabled = false;
+            DiscardAllButton.IsEnabled = false;
             StageAllButton.IsEnabled = false;
             UnstageAllButton.IsEnabled = false;
             return;
@@ -187,6 +188,35 @@ public partial class GitCommitWindow : Window
             : $"Discarded {selected.Count} file(s).";
     }
 
+    private async void OnDiscardAllClick(object? sender, RoutedEventArgs e)
+    {
+        if (_files.Count == 0)
+        {
+            StatusLabel.Text = "No files to discard.";
+            return;
+        }
+
+        DiscardAllButton.IsEnabled = false;
+        DiscardButton.IsEnabled = false;
+        StatusLabel.Text = $"Discarding all {_files.Count} file(s)...";
+
+        var errors = new List<string>();
+        foreach (var file in _files)
+        {
+            var result = await _git.DiscardFileAsync(file);
+            if (!result.Success)
+                errors.Add($"{file.FilePath}: {result.Error.Trim()}");
+        }
+
+        FilesWereDiscarded = true;
+        var count = _files.Count;
+        await RefreshFileListAsync();
+
+        StatusLabel.Text = errors.Count > 0
+            ? $"Discarded with errors: {string.Join("; ", errors)}"
+            : $"Discarded {count} file(s).";
+    }
+
     private async void OnCommitClick(object? sender, RoutedEventArgs e)
     {
         var message = CommitMessageBox.Text?.Trim();
@@ -241,5 +271,6 @@ public partial class GitCommitWindow : Window
                             .Any(kv => kv.Value.Tag is GitFileStatus { IsStaged: true });
         CommitButton.IsEnabled = hasMessage && hasStaged;
         DiscardButton.IsEnabled = hasChecked;
+        DiscardAllButton.IsEnabled = _files.Count > 0;
     }
 }
