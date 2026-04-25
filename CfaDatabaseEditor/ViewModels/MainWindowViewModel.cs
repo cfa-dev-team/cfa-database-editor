@@ -216,6 +216,8 @@ public partial class MainWindowViewModel : ViewModelBase
             if (_db.RootPath != null)
                 await Md5ChecksumGenerator.RegenerateChecksumsAsync(_db.RootPath, _db.BuiltInAllCardValue);
 
+            await RefreshGitStatusAsync();
+
             StatusText = "Saved successfully";
         }
         catch (Exception ex)
