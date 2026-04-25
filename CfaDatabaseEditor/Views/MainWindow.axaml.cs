@@ -408,6 +408,11 @@ public partial class MainWindow : Window
             await vm.ReloadDatabaseAsync();
             await vm.RefreshGitStatusAsync();
         }
+        else if (branchWindow.CreatedBranch != null)
+        {
+            await vm.RefreshGitStatusAsync();
+            vm.StatusText = $"Created and switched to {branchWindow.CreatedBranch}.";
+        }
     }
 
     private async void OnGitRefreshClick(object? sender, RoutedEventArgs e)
@@ -433,6 +438,11 @@ public partial class MainWindow : Window
             vm.StatusText = $"Switched to {branchWindow.CheckedOutBranch}. Reloading database...";
             await vm.ReloadDatabaseAsync();
             await vm.RefreshGitStatusAsync();
+        }
+        else if (branchWindow.CreatedBranch != null)
+        {
+            await vm.RefreshGitStatusAsync();
+            vm.StatusText = $"Created and switched to {branchWindow.CreatedBranch}.";
         }
     }
 

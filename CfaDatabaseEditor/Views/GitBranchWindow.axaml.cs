@@ -14,6 +14,9 @@ public partial class GitBranchWindow : Window
     /// <summary>The branch that was successfully checked out, or null if cancelled.</summary>
     public string? CheckedOutBranch { get; private set; }
 
+    /// <summary>True if a new branch was created (working tree did not change).</summary>
+    public string? CreatedBranch { get; private set; }
+
     public GitBranchWindow()
     {
         InitializeComponent();
@@ -152,6 +155,66 @@ public partial class GitBranchWindow : Window
     private void OnCancelClick(object? sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    private async void OnNewBranchClick(object? sender, RoutedEventArgs e)
+    {
+        var name = await PromptForBranchNameAsync();
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        StatusLabel.Text = $"Creating {name}...";
+        var result = await _git.CreateBranchAsync(name.Trim());
+        if (result.Success)
+        {
+            CreatedBranch = name.Trim();
+            Close();
+        }
+        else
+        {
+            StatusLabel.Text = $"Create failed: {result.Error.Trim()}";
+        }
+    }
+
+    private async Task<string?> PromptForBranchNameAsync()
+    {
+        string? result = null;
+        var dialog = new Window
+        {
+            Title = "New Branch",
+            Width = 360,
+            Height = 150,
+            CanResize = false,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+
+        var panel = new StackPanel { Margin = new Avalonia.Thickness(16), Spacing = 10 };
+        panel.Children.Add(new TextBlock
+        {
+            Text = $"Create a new branch from {_git.CurrentBranch ?? "HEAD"}.",
+            FontSize = 12
+        });
+
+        var input = new TextBox { Watermark = "branch-name" };
+        panel.Children.Add(input);
+
+        var buttons = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+            Spacing = 8
+        };
+        var ok = new Button { Content = "Create", Width = 80, IsDefault = true };
+        var cancel = new Button { Content = "Cancel", Width = 80, IsCancel = true };
+        ok.Click += (_, _) => { result = input.Text; dialog.Close(); };
+        cancel.Click += (_, _) => { result = null; dialog.Close(); };
+        buttons.Children.Add(ok);
+        buttons.Children.Add(cancel);
+        panel.Children.Add(buttons);
+
+        dialog.Content = panel;
+        dialog.Opened += (_, _) => input.Focus();
+        await dialog.ShowDialog(this);
+        return result;
     }
 
     private record BranchEntry(string Name, bool IsRemote, bool IsCurrent);

@@ -10,10 +10,13 @@
         <!-- Bottom: buttons & status -->
         <TextBlock x:Name="StatusLabel" DockPanel.Dock="Bottom" FontSize="11" Foreground="{DynamicResource SubtleTextBrush}"
                    Margin="0,4,0,0" TextWrapping="Wrap"/>
-        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
-            <Button x:Name="CheckoutButton" Content="Checkout" Click="OnCheckoutClick" Width="90" IsEnabled="False"/>
-            <Button Content="Cancel" Click="OnCancelClick" Width="80"/>
-        </StackPanel>
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+            <Button DockPanel.Dock="Left" Content="New Branch..." Click="OnNewBranchClick" Width="120"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                <Button x:Name="CheckoutButton" Content="Checkout" Click="OnCheckoutClick" Width="90" IsEnabled="False"/>
+                <Button Content="Cancel" Click="OnCancelClick" Width="80"/>
+            </StackPanel>
+        </DockPanel>
 
         <!-- Search -->
         <TextBox x:Name="SearchBox" DockPanel.Dock="Top" Watermark="Filter branches..."

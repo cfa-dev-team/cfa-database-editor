@@ -201,6 +201,10 @@ public class GitService
     public Task<GitResult> CheckoutAsync(string branchName)
         => RunAsync("checkout", branchName);
 
+    /// <summary>Create a new branch from HEAD and switch to it.</summary>
+    public Task<GitResult> CreateBranchAsync(string branchName)
+        => RunAsync("checkout", "-b", branchName);
+
     // ── internals ──
 
     private async Task<bool> CheckGitInstalledAsync()
