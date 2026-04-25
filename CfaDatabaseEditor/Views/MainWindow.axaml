@@ -218,7 +218,7 @@
                                            TextWrapping="Wrap" IsVisible="{Binding HasEncodingIssue}"/>
 
                                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Grade:" VerticalAlignment="Center"/>
-                                <NumericUpDown FormatString="0" Grid.Row="3" Grid.Column="1" Value="{Binding UnitGrade}" Minimum="0" Maximum="5" Width="120" HorizontalAlignment="Left"/>
+                                <NumericUpDown FormatString="0" Grid.Row="3" Grid.Column="1" Value="{Binding UnitGrade}" Minimum="0" Width="120" HorizontalAlignment="Left"/>
 
                                 <TextBlock Grid.Row="4" Grid.Column="0" Text="Power:" VerticalAlignment="Center"/>
                                 <NumericUpDown FormatString="0" Grid.Row="4" Grid.Column="1" Value="{Binding PowerStat}" Minimum="0" Increment="1000" Width="160" HorizontalAlignment="Left"/>
