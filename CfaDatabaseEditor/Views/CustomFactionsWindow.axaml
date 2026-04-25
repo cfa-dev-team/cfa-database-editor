@@ -5,15 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
         x:Class="CfaDatabaseEditor.Views.CustomFactionsWindow"
-        Title="Custom Factions"
+        Title="Factions"
         Width="620" Height="520"
         MinWidth="500" MinHeight="400"
         WindowStartupLocation="CenterOwner">
 
     <DockPanel Margin="12">
         <!-- Header -->
-        <TextBlock DockPanel.Dock="Top" Text="Custom Clans &amp; Nations" FontWeight="Bold" FontSize="16" Margin="0,0,0,4"/>
-        <TextBlock DockPanel.Dock="Top" Text="Manage custom factions stored in Custom Overrides.txt. Use IDs 100+ for factions, 20000+ for cards."
+        <TextBlock x:Name="HeaderTitle" DockPanel.Dock="Top" Text="Custom Clans &amp; Nations" FontWeight="Bold" FontSize="16" Margin="0,0,0,4"/>
+        <TextBlock x:Name="HeaderSubtitle" DockPanel.Dock="Top"
+                   Text="Manage custom factions stored in Custom Overrides.txt. Use IDs 100+ for factions, 20000+ for cards."
                    Foreground="{DynamicResource SubtleTextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
         <!-- Buttons at bottom -->

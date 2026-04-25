@@ -28,3 +28,14 @@ public class CustomOverridesData
     /// </summary>
     public List<string> OtherLines { get; set; } = new();
 }
+
+/// <summary>
+/// Built-in faction entries parsed from NoUse.txt's CustomFaction* array
+/// (indices 0-99). The container tracks an in-memory dirty flag so we can
+/// avoid rewriting NoUse.txt when nothing changed.
+/// </summary>
+public class BuiltInFactionsData
+{
+    public List<CustomFactionData> Factions { get; set; } = new();
+    public bool IsModified { get; set; }
+}

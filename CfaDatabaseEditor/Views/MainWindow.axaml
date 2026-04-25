@@ -65,6 +65,7 @@
                 <MenuItem Header="_Refresh Status" Click="OnGitRefreshClick"/>
             </MenuItem>
             <MenuItem Header="_Tools">
+                <MenuItem Header="_Built-in Factions..." Click="OnBuiltInFactionsClick"/>
                 <MenuItem Header="Custom _Factions..." Click="OnCustomFactionsClick"/>
                 <Separator/>
                 <MenuItem Header="EN Database _Sync..." Click="OnEnSyncClick"/>

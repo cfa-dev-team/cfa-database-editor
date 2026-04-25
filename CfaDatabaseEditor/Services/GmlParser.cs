@@ -496,5 +496,69 @@ public static class GmlParser
         return data;
     }
 
+    /// <summary>
+    /// Parses built-in faction entries from NoUse.txt's CustomFaction* array (indices 0-99).
+    /// Custom factions (index >= 100) are excluded; those live in Custom Overrides.txt.
+    /// </summary>
+    public static BuiltInFactionsData ParseBuiltInFactions(string textFolderPath)
+    {
+        var data = new BuiltInFactionsData();
+        var noUsePath = Path.Combine(textFolderPath, "NoUse.txt");
+        if (!File.Exists(noUsePath)) return data;
+
+        var lines = File.ReadAllLines(noUsePath, Win1251);
+
+        var clanIds = new Dictionary<int, int>();
+        var nationIds = new Dictionary<int, int>();
+        var names = new Dictionary<int, string>();
+        var fileNames = new Dictionary<int, string>();
+
+        var reClanId = new Regex(@"^global\.CustomFactionClanId\[(\d+)\]\s*=\s*(-?\d+)");
+        var reNationId = new Regex(@"^global\.CustomFactionNationId\[(\d+)\]\s*=\s*(-?\d+)");
+        var reName = new Regex(@"^global\.CustomFactionName\[(\d+)\]\s*=\s*'(.+)'");
+        var reFile = new Regex(@"^global\.CustomFactionFile\[(\d+)\]\s*=\s*'(.+)'");
+
+        foreach (var line in lines)
+        {
+            var trimmed = line.Trim();
+            Match m;
+
+            m = reClanId.Match(trimmed);
+            if (m.Success) { clanIds[int.Parse(m.Groups[1].Value)] = int.Parse(m.Groups[2].Value); continue; }
+
+            m = reNationId.Match(trimmed);
+            if (m.Success) { nationIds[int.Parse(m.Groups[1].Value)] = int.Parse(m.Groups[2].Value); continue; }
+
+            m = reName.Match(trimmed);
+            if (m.Success) { names[int.Parse(m.Groups[1].Value)] = m.Groups[2].Value; continue; }
+
+            m = reFile.Match(trimmed);
+            if (m.Success) { fileNames[int.Parse(m.Groups[1].Value)] = m.Groups[2].Value; }
+        }
+
+        var allIndices = new HashSet<int>();
+        foreach (var k in clanIds.Keys) allIndices.Add(k);
+        foreach (var k in nationIds.Keys) allIndices.Add(k);
+        foreach (var k in names.Keys) allIndices.Add(k);
+        foreach (var k in fileNames.Keys) allIndices.Add(k);
+
+        foreach (var idx in allIndices.OrderBy(i => i))
+        {
+            if (idx >= 100) continue; // Custom factions live in Custom Overrides.txt
+            if (!names.ContainsKey(idx)) continue;
+
+            data.Factions.Add(new CustomFactionData
+            {
+                Index = idx,
+                ClanId = clanIds.GetValueOrDefault(idx, 0),
+                NationId = nationIds.GetValueOrDefault(idx, -1),
+                Name = names.GetValueOrDefault(idx, ""),
+                FileName = fileNames.GetValueOrDefault(idx, "")
+            });
+        }
+
+        return data;
+    }
+
     public static Encoding GetEncoding() => Win1251;
 }

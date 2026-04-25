@@ -181,45 +181,68 @@ public partial class MainWindow : Window
 
     private void RebuildCustomFactionMenuItems(MainWindowViewModel vm)
     {
-        // Remove old custom faction menu items (tagged with "custom")
+        // Remove dynamic faction items added by previous rebuilds.
         var toRemove = NewCardMenu.Items.OfType<Control>()
-            .Where(c => c.Tag is string s && s == "custom")
+            .Where(c => c.Tag is string s && (s == "custom" || s == "builtin-dynamic"
+                                              || s == "custom-sep" || s == "builtin-dynamic-sep"))
             .ToList();
         foreach (var item in toRemove)
             NewCardMenu.Items.Remove(item);
 
-        // Also remove the custom separator if present
-        var customSep = NewCardMenu.Items.OfType<Separator>()
-            .FirstOrDefault(s => s.Tag is string t && t == "custom-sep");
-        if (customSep != null)
-            NewCardMenu.Items.Remove(customSep);
+        // Built-in dynamic factions (from NoUse.txt CustomFaction array) — only those
+        // with an associated text file are actionable as a "new card" target.
+        var builtInDynamic = ClanRegistry.DynamicBuiltInFactions
+            .Where(f => !string.IsNullOrEmpty(f.FileName))
+            .ToList();
+        if (builtInDynamic.Count > 0)
+        {
+            NewCardMenu.Items.Add(new Separator { Tag = "builtin-dynamic-sep" });
+            foreach (var faction in builtInDynamic)
+            {
+                var suffix = faction.Type == FactionType.Nation ? " [Nation]" : " [Clan]";
+                NewCardMenu.Items.Add(new MenuItem
+                {
+                    Header = faction.Name + suffix,
+                    Command = vm.AddNewCardCommand,
+                    CommandParameter = faction,
+                    Tag = "builtin-dynamic"
+                });
+            }
+        }
 
         var customFactions = ClanRegistry.CustomFactions;
         if (customFactions.Count == 0) return;
 
-        var sep = new Separator { Tag = "custom-sep" };
-        NewCardMenu.Items.Add(sep);
-
+        NewCardMenu.Items.Add(new Separator { Tag = "custom-sep" });
         foreach (var faction in customFactions)
         {
             var suffix = faction.Type == FactionType.Nation ? " [Nation]" : " [Clan]";
-            var item = new MenuItem
+            NewCardMenu.Items.Add(new MenuItem
             {
                 Header = faction.Name + suffix,
                 Command = vm.AddNewCardCommand,
                 CommandParameter = faction,
                 Tag = "custom"
-            };
-            NewCardMenu.Items.Add(item);
+            });
         }
     }
 
     private async void OnCustomFactionsClick(object? sender, RoutedEventArgs e)
     {
+        await ShowFactionsDialogAsync(FactionsWindowMode.Custom);
+    }
+
+    private async void OnBuiltInFactionsClick(object? sender, RoutedEventArgs e)
+    {
+        await ShowFactionsDialogAsync(FactionsWindowMode.BuiltIn);
+    }
+
+    private async Task ShowFactionsDialogAsync(FactionsWindowMode mode)
+    {
         if (DataContext is not MainWindowViewModel vm || !vm.Database.IsLoaded) return;
 
         var dialog = new CustomFactionsWindow();
-        dialog.SetDatabase(vm.Database);
+        dialog.SetDatabase(vm.Database, mode);
         await dialog.ShowDialog(this);
 
         if (dialog.WasModified)
@@ -228,7 +251,9 @@ public partial class MainWindow : Window
             RebuildCustomFactionMenuItems(vm);
             foreach (var picker in this.GetVisualDescendants().OfType<FactionPicker>())
                 picker.RefreshOptions();
-            vm.StatusText = "Custom factions updated. Save the database to persist.";
+            vm.StatusText = mode == FactionsWindowMode.BuiltIn
+                ? "Built-in factions updated. Save the database to persist."
+                : "Custom factions updated. Save the database to persist.";
         }
     }
 

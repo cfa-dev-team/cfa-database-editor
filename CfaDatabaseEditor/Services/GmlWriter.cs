@@ -293,6 +293,97 @@ public static class GmlWriter
     }
 
     /// <summary>
+    /// Replaces the built-in CustomFaction* block (indices 0-99) and the
+    /// MaxCustomFaction line in NoUse.txt with new content. Non-faction lines
+    /// and any custom-faction entries (index >= 100) are preserved.
+    /// </summary>
+    public static void WriteBuiltInFactions(string textFolderPath, BuiltInFactionsData data)
+    {
+        var encoding = GmlParser.GetEncoding();
+        var noUsePath = Path.Combine(textFolderPath, "NoUse.txt");
+        if (!File.Exists(noUsePath)) return;
+
+        var lines = File.ReadAllLines(noUsePath, encoding).ToList();
+
+        var reBuiltInFaction = new System.Text.RegularExpressions.Regex(
+            @"^\s*global\.CustomFaction(ClanId|NationId|Name|File)\[(\d+)\]");
+        var reMaxFaction = new System.Text.RegularExpressions.Regex(
+            @"^\s*global\.MaxCustomFaction\s*=");
+
+        // Determine which existing CustomFaction lines belong to built-in indices (0-99).
+        // Custom Overrides.txt-managed entries (index >= 100) must be preserved.
+        var builtInLineIndices = new SortedSet<int>();
+        for (int i = 0; i < lines.Count; i++)
+        {
+            var m = reBuiltInFaction.Match(lines[i]);
+            if (!m.Success) continue;
+            if (int.Parse(m.Groups[2].Value) < 100)
+                builtInLineIndices.Add(i);
+        }
+
+        // Find the MaxCustomFaction line — replace it together with the block,
+        // since NoUse.txt is the canonical place for it.
+        int maxFactionLine = -1;
+        for (int i = 0; i < lines.Count; i++)
+        {
+            if (reMaxFaction.IsMatch(lines[i])) { maxFactionLine = i; break; }
+        }
+
+        // Remove existing built-in faction lines and the MaxCustomFaction line
+        // (in reverse order to keep indices valid).
+        var toRemove = new SortedSet<int>(builtInLineIndices);
+        if (maxFactionLine >= 0) toRemove.Add(maxFactionLine);
+
+        // Also remove blank lines that were inside the built-in block, so we
+        // don't leave stray gaps. A blank line counts as "inside" if it has at
+        // least one removed line both immediately before and immediately after
+        // (allowing for further blanks in between).
+        var removeSet = new HashSet<int>(toRemove);
+        if (toRemove.Count > 0)
+        {
+            int blockStart = toRemove.Min();
+            int blockEnd = toRemove.Max();
+            for (int i = blockStart; i <= blockEnd; i++)
+            {
+                if (removeSet.Contains(i)) continue;
+                if (string.IsNullOrWhiteSpace(lines[i]))
+                    removeSet.Add(i);
+            }
+        }
+
+        int insertAt = removeSet.Count > 0 ? removeSet.Min() : lines.Count;
+        var sortedRemove = removeSet.OrderByDescending(i => i).ToList();
+        foreach (var idx in sortedRemove) lines.RemoveAt(idx);
+
+        // Build the new block.
+        var block = new List<string>();
+        foreach (var f in data.Factions.Where(f => f.Index < 100).OrderBy(f => f.Index))
+        {
+            block.Add($"global.CustomFactionClanId[{f.Index}] = {f.ClanId}");
+            block.Add($"global.CustomFactionNationId[{f.Index}] = {f.NationId}");
+            block.Add($"global.CustomFactionName[{f.Index}] = '{f.Name}'");
+            block.Add($"global.CustomFactionFile[{f.Index}] = '{f.FileName}'");
+            block.Add("");
+        }
+
+        if (data.Factions.Count > 0)
+        {
+            var maxIndex = data.Factions.Where(f => f.Index < 100).Max(f => f.Index);
+            block.Add("//Increase left number for every new clan/nation");
+            block.Add($"global.MaxCustomFaction = {maxIndex} + 1");
+        }
+        else
+        {
+            block.Add("global.MaxCustomFaction = 0");
+        }
+
+        if (insertAt > lines.Count) insertAt = lines.Count;
+        lines.InsertRange(insertAt, block);
+
+        File.WriteAllLines(noUsePath, lines, encoding);
+    }
+
+    /// <summary>
     /// Writes custom faction definitions to Custom Overrides.txt.
     /// Preserves non-faction lines from the original file.
     /// </summary>

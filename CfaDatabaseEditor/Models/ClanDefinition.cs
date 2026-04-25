@@ -38,10 +38,10 @@ public static class ClanRegistry
 {
     // Standard Nations
     public static readonly ClanDefinition DragonEmpire = new() { Id = 1, Name = "Dragon Empire", Type = FactionType.Nation, Era = FactionEra.Standard, DisplayColor = Color.Parse("#D32F2F"), FileName = "Dragon Empire.txt" };
-    public static readonly ClanDefinition DarkStates = new() { Id = 2, Name = "Dark States", Type = FactionType.Nation, Era = FactionEra.Standard, DisplayColor = Color.Parse("#7B1FA2"), FileName = "Dark States.txt" };
+    public static readonly ClanDefinition DarkStates = new() { Id = 2, Name = "Dark States", Type = FactionType.Nation, Era = FactionEra.Standard, DisplayColor = Color.Parse("#0D47A1"), FileName = "Dark States.txt" };
     public static readonly ClanDefinition KeterSanctuary = new() { Id = 3, Name = "Keter Sanctuary", Type = FactionType.Nation, Era = FactionEra.Standard, DisplayColor = Color.Parse("#FFC107"), FileName = "Keter Sanctuary.txt" };
     public static readonly ClanDefinition Stoicheia = new() { Id = 4, Name = "Stoicheia", Type = FactionType.Nation, Era = FactionEra.Standard, DisplayColor = Color.Parse("#388E3C"), FileName = "Stoicheia.txt" };
-    public static readonly ClanDefinition BrandtGate = new() { Id = 5, Name = "Brandt Gate", Type = FactionType.Nation, Era = FactionEra.Standard, DisplayColor = Color.Parse("#1976D2"), FileName = "Brandt Gate.txt" };
+    public static readonly ClanDefinition BrandtGate = new() { Id = 5, Name = "Brandt Gate", Type = FactionType.Nation, Era = FactionEra.Standard, DisplayColor = Color.Parse("#BDBDBD"), FileName = "Brandt Gate.txt" };
     public static readonly ClanDefinition LyricalMonasterio = new() { Id = 6, Name = "Lyrical Monasterio", Type = FactionType.Nation, Era = FactionEra.Standard, DisplayColor = Color.Parse("#C48DB8"), FileName = "Lyrical Monasterio.txt" };
 
     // Other Nations
@@ -56,8 +56,9 @@ public static class ClanRegistry
 
     // Clan color constants
     private static readonly Color ClanGrey = Color.Parse("#9E9E9E");
+    private static readonly Color ClanBrandtGate = Color.Parse("#BDBDBD");     // Light grey
     private static readonly Color ClanDragonEmpire = Color.Parse("#D32F2F");   // Same as Dragon Empire nation
-    private static readonly Color ClanDarkStates = Color.Parse("#7B1FA2");     // Same as Dark States nation
+    private static readonly Color ClanDarkStates = Color.Parse("#0D47A1");     // Dark blue, same as Dark States nation
     private static readonly Color ClanSanctuary = Color.Parse("#FFC107");      // Same as Keter Sanctuary nation (United Sanctuary)
     private static readonly Color ClanMagellanica = Color.Parse("#5C9AC7");    // Aqua Force, Granblue, Bermuda
     private static readonly Color ClanZoo = Color.Parse("#6DAF6D");            // Megacolony, Great Nature, Neo Nectar
@@ -92,12 +93,12 @@ public static class ClanRegistry
     public static readonly ClanDefinition AquaForce = new() { Id = 3, Name = "Aqua Force", Type = FactionType.Clan, Era = FactionEra.VPremium, ParentNationId = 4, DisplayColor = ClanMagellanica, FileName = "Aqua Force.txt" };
     public static readonly ClanDefinition Granblue = new() { Id = 8, Name = "Granblue", Type = FactionType.Clan, Era = FactionEra.VPremium, ParentNationId = 4, DisplayColor = ClanMagellanica, FileName = "Granblue.txt" };
 
-    // V/G Clans - Star Gate (Brandt Gate) - grey, no old nation distinction
-    public static readonly ClanDefinition NovaGrappler = new() { Id = 4, Name = "Nova Grappler", Type = FactionType.Clan, Era = FactionEra.VPremium, ParentNationId = 5, DisplayColor = ClanGrey, FileName = "Nova Grappler.txt" };
-    public static readonly ClanDefinition DimensionPolice = new() { Id = 6, Name = "Dimension Police", Type = FactionType.Clan, Era = FactionEra.VPremium, ParentNationId = 5, DisplayColor = ClanGrey, FileName = "Dimension Police.txt" };
-    public static readonly ClanDefinition LinkJoker = new() { Id = 24, Name = "Link Joker", Type = FactionType.Clan, Era = FactionEra.VPremium, ParentNationId = 5, DisplayColor = ClanGrey, FileName = "Link Joker.txt" };
-    public static readonly ClanDefinition Etranger = new() { Id = 22, Name = "Etranger", Type = FactionType.Clan, Era = FactionEra.VPremium, ParentNationId = 5, DisplayColor = ClanGrey, FileName = "Etrangers.txt" };
-    public static readonly ClanDefinition MaskCollection = new() { Id = 28, Name = "Mask Collection", Type = FactionType.Clan, Era = FactionEra.VPremium, ParentNationId = 5, DisplayColor = ClanGrey, FileName = "The Mask Collection.txt" };
+    // V/G Clans - Star Gate (Brandt Gate) - light grey, no old nation distinction
+    public static readonly ClanDefinition NovaGrappler = new() { Id = 4, Name = "Nova Grappler", Type = FactionType.Clan, Era = FactionEra.VPremium, ParentNationId = 5, DisplayColor = ClanBrandtGate, FileName = "Nova Grappler.txt" };
+    public static readonly ClanDefinition DimensionPolice = new() { Id = 6, Name = "Dimension Police", Type = FactionType.Clan, Era = FactionEra.VPremium, ParentNationId = 5, DisplayColor = ClanBrandtGate, FileName = "Dimension Police.txt" };
+    public static readonly ClanDefinition LinkJoker = new() { Id = 24, Name = "Link Joker", Type = FactionType.Clan, Era = FactionEra.VPremium, ParentNationId = 5, DisplayColor = ClanBrandtGate, FileName = "Link Joker.txt" };
+    public static readonly ClanDefinition Etranger = new() { Id = 22, Name = "Etranger", Type = FactionType.Clan, Era = FactionEra.VPremium, ParentNationId = 5, DisplayColor = ClanBrandtGate, FileName = "Etrangers.txt" };
+    public static readonly ClanDefinition MaskCollection = new() { Id = 28, Name = "Mask Collection", Type = FactionType.Clan, Era = FactionEra.VPremium, ParentNationId = 5, DisplayColor = ClanBrandtGate, FileName = "The Mask Collection.txt" };
 
     // V/G Clans - Lyrical (Bermuda = Magellanica = blue)
     public static readonly ClanDefinition BermudaTriangle = new() { Id = 13, Name = "Bermuda Triangle", Type = FactionType.Clan, Era = FactionEra.VPremium, ParentNationId = 6, DisplayColor = ClanMagellanica, FileName = "Bermuda.txt" };
@@ -121,15 +122,22 @@ public static class ClanRegistry
     private static readonly Color CustomNationColor = Color.Parse("#00897B");
     private static readonly Color CustomClanColor = Color.Parse("#26A69A");
 
+    // Dynamic built-in factions get the same orange used by hardcoded crossover nations.
+    private static readonly Color DynamicBuiltInNationColor = Color.Parse("#FF9800");
+    private static readonly Color DynamicBuiltInClanColor = ClanGrey;
+
     private static readonly List<ClanDefinition> _builtInNations;
     private static readonly List<ClanDefinition> _builtInClans;
     private static readonly List<ClanDefinition> _customNations = new();
     private static readonly List<ClanDefinition> _customClans = new();
+    private static readonly List<ClanDefinition> _dynamicBuiltInNations = new();
+    private static readonly List<ClanDefinition> _dynamicBuiltInClans = new();
 
     public static IReadOnlyList<ClanDefinition> AllNations { get; private set; }
     public static IReadOnlyList<ClanDefinition> AllClans { get; private set; }
     public static IReadOnlyList<ClanDefinition> All { get; private set; }
     public static IReadOnlyList<ClanDefinition> CustomFactions => _customNations.Concat(_customClans).ToList();
+    public static IReadOnlyList<ClanDefinition> DynamicBuiltInFactions => _dynamicBuiltInNations.Concat(_dynamicBuiltInClans).ToList();
 
     static ClanRegistry()
     {
@@ -189,18 +197,57 @@ public static class ClanRegistry
                 _customClans.Add(f);
         }
 
-        AllNations = _builtInNations.Concat(_customNations).ToList();
-        AllClans = _builtInClans.Concat(_customClans).ToList();
-        All = AllNations.Concat(AllClans).ToList();
-        RebuildLookups();
+        RebuildAggregateLists();
     }
 
     public static void ClearCustomFactions()
     {
         _customNations.Clear();
         _customClans.Clear();
-        AllNations = _builtInNations.ToList();
-        AllClans = _builtInClans.ToList();
+        RebuildAggregateLists();
+    }
+
+    /// <summary>
+    /// Registers built-in factions parsed from NoUse.txt's CustomFaction* array.
+    /// Dynamic entries override hardcoded built-ins with the same Id+Type.
+    /// </summary>
+    public static void RegisterDynamicBuiltInFactions(IEnumerable<ClanDefinition> factions)
+    {
+        _dynamicBuiltInNations.Clear();
+        _dynamicBuiltInClans.Clear();
+
+        foreach (var f in factions)
+        {
+            if (f.Type == FactionType.Nation)
+                _dynamicBuiltInNations.Add(f);
+            else
+                _dynamicBuiltInClans.Add(f);
+        }
+
+        RebuildAggregateLists();
+    }
+
+    public static void ClearDynamicBuiltInFactions()
+    {
+        _dynamicBuiltInNations.Clear();
+        _dynamicBuiltInClans.Clear();
+        RebuildAggregateLists();
+    }
+
+    private static void RebuildAggregateLists()
+    {
+        // Dynamic built-ins override hardcoded built-ins by Id.
+        var dynamicNationIds = _dynamicBuiltInNations.Select(n => n.Id).ToHashSet();
+        var dynamicClanIds = _dynamicBuiltInClans.Select(c => c.Id).ToHashSet();
+
+        AllNations = _builtInNations.Where(n => !dynamicNationIds.Contains(n.Id))
+            .Concat(_dynamicBuiltInNations)
+            .Concat(_customNations)
+            .ToList();
+        AllClans = _builtInClans.Where(c => !dynamicClanIds.Contains(c.Id))
+            .Concat(_dynamicBuiltInClans)
+            .Concat(_customClans)
+            .ToList();
         All = AllNations.Concat(AllClans).ToList();
         RebuildLookups();
     }
@@ -261,4 +308,6 @@ public static class ClanRegistry
 
     public static Color GetCustomNationColor() => CustomNationColor;
     public static Color GetCustomClanColor() => CustomClanColor;
+    public static Color GetDynamicBuiltInNationColor() => DynamicBuiltInNationColor;
+    public static Color GetDynamicBuiltInClanColor() => DynamicBuiltInClanColor;
 }

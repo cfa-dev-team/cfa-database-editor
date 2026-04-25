@@ -15,6 +15,7 @@ public class DatabaseService
     public int AllCardValue { get; set; }
     public int BuiltInAllCardValue { get; private set; }
     public CustomOverridesData? CustomOverrides { get; set; }
+    public BuiltInFactionsData BuiltInFactions { get; set; } = new();
     public int? CustomCardStartId { get; set; }
 
     public bool IsLoaded => RootPath != null;
@@ -25,6 +26,7 @@ public class DatabaseService
         CardFiles.Clear();
         AllCards.Clear();
         ClanRegistry.ClearCustomFactions();
+        ClanRegistry.ClearDynamicBuiltInFactions();
 
         var textPath = Path.Combine(rootPath, "Text");
         if (!Directory.Exists(textPath))
@@ -32,6 +34,11 @@ public class DatabaseService
 
         AllCardValue = GmlParser.ParseAllCard(textPath);
         BuiltInAllCardValue = AllCardValue;
+
+        // Parse built-in factions from NoUse.txt
+        BuiltInFactions = GmlParser.ParseBuiltInFactions(textPath);
+        Program.Log?.WriteLine($"[INFO] Found {BuiltInFactions.Factions.Count} built-in factions in NoUse.txt");
+        RegisterDynamicBuiltInFactions(BuiltInFactions);
 
         // Parse custom overrides for custom factions
         CustomOverrides = GmlParser.ParseCustomOverrides(textPath);
@@ -151,6 +158,36 @@ public class DatabaseService
         ClanRegistry.RegisterCustomFactions(definitions);
     }
 
+    private void RegisterDynamicBuiltInFactions(BuiltInFactionsData builtIns)
+    {
+        var definitions = new List<ClanDefinition>();
+
+        foreach (var f in builtIns.Factions)
+        {
+            bool isNation = f.ClanId == 0;
+            // Preserve hardcoded display color when one exists for this Id+Type,
+            // so the editor's existing palette (e.g. orange crossover nations) carries over.
+            var hardcoded = isNation ? ClanRegistry.GetNationById(f.NationId) : ClanRegistry.GetClanById(f.ClanId);
+            var color = hardcoded?.DisplayColor
+                        ?? (isNation ? ClanRegistry.GetDynamicBuiltInNationColor() : ClanRegistry.GetDynamicBuiltInClanColor());
+
+            definitions.Add(new ClanDefinition
+            {
+                Id = isNation ? f.NationId : f.ClanId,
+                Name = f.Name,
+                Type = isNation ? FactionType.Nation : FactionType.Clan,
+                Era = hardcoded?.Era ?? FactionEra.Crossover,
+                ParentNationId = isNation ? null : (f.NationId >= 0 ? f.NationId : null),
+                DisplayColor = color,
+                FileName = f.FileName,
+                IsCustom = false,
+                CustomIndex = f.Index
+            });
+        }
+
+        ClanRegistry.RegisterDynamicBuiltInFactions(definitions);
+    }
+
     public void SaveModifiedFiles()
     {
         foreach (var cardFile in CardFiles.Where(f => f.IsModified || f.Cards.Any(c => c.IsModified)))
@@ -161,6 +198,13 @@ public class DatabaseService
         if (TextPath != null)
         {
             GmlWriter.UpdateAllCard(TextPath, AllCardValue);
+
+            // Write built-in factions back to NoUse.txt only when the user changed them
+            if (BuiltInFactions.IsModified)
+            {
+                GmlWriter.WriteBuiltInFactions(TextPath, BuiltInFactions);
+                BuiltInFactions.IsModified = false;
+            }
 
             // Update Custom Overrides if it exists
             if (CustomOverrides != null)
