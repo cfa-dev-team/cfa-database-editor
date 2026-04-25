@@ -513,10 +513,15 @@
             <Grid x:Name="PreviewGrid" Grid.Column="4" Margin="4" RowDefinitions="440,4,*">
                 <!-- Card Image + Actions -->
                 <DockPanel Grid.Row="0" MinHeight="100">
-                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
-                        <Button Content="Replace Image"
-                                Click="OnReplaceImageClick"
-                                HorizontalAlignment="Stretch"/>
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="6" Margin="0,4,0,0"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="New image:" VerticalAlignment="Center"/>
+                        <Button Content="&#x1F4C2;" FontSize="14" Padding="6,2" MinWidth="0" MinHeight="0"
+                                Click="OnReplaceImageDiskClick" ToolTip.Tip="Load from disk"/>
+                        <Button Content="&#x1F4CB;" FontSize="14" Padding="6,2" MinWidth="0" MinHeight="0"
+                                Click="OnReplaceImageClipboardClick" ToolTip.Tip="Paste from clipboard"/>
+                        <Button Content="&#x1F517;" FontSize="14" Padding="6,2" MinWidth="0" MinHeight="0"
+                                Click="OnReplaceImageUrlClick" ToolTip.Tip="Load from URL"/>
                     </StackPanel>
                     <Border Background="#333" CornerRadius="4">
                         <Image Source="{Binding CardImagePath, Converter={StaticResource PathToBitmap}}"

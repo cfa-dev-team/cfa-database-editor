@@ -145,7 +145,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private async void OnReplaceImageClick(object? sender, RoutedEventArgs e)
+    private async void OnReplaceImageDiskClick(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not MainWindowViewModel vm) return;
         if (vm.SelectedCard == null) return;
@@ -153,6 +153,147 @@ public partial class MainWindow : Window
         var path = await PickImageFileAsync();
         if (path == null) return;
         vm.ReplaceImageFromFile(path);
+    }
+
+    private async void OnReplaceImageClipboardClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        if (vm.SelectedCard == null) return;
+
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard == null)
+        {
+            await ShowImageErrorAsync("Clipboard is not available.");
+            return;
+        }
+
+        var bytes = await TryReadClipboardImageAsync(clipboard);
+        if (bytes == null)
+        {
+            await ShowImageErrorAsync("No image found in clipboard.");
+            return;
+        }
+
+        vm.ReplaceImageFromBytes(bytes);
+    }
+
+    private async void OnReplaceImageUrlClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        if (vm.SelectedCard == null) return;
+
+        var url = await PromptForUrlAsync();
+        if (string.IsNullOrWhiteSpace(url)) return;
+
+        try
+        {
+            using var http = new System.Net.Http.HttpClient();
+            http.Timeout = TimeSpan.FromSeconds(20);
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("CfaDatabaseEditor/1.0");
+            var bytes = await http.GetByteArrayAsync(url.Trim());
+            if (bytes.Length == 0)
+            {
+                await ShowImageErrorAsync("Downloaded image is empty.");
+                return;
+            }
+            vm.ReplaceImageFromBytes(bytes);
+        }
+        catch (Exception ex)
+        {
+            await ShowImageErrorAsync($"Could not fetch image:\n{ex.Message}");
+        }
+    }
+
+    private static async Task<byte[]?> TryReadClipboardImageAsync(Avalonia.Input.Platform.IClipboard clipboard)
+    {
+        // Try common image formats. Order matters — prefer lossless PNG when available.
+        string[] candidates = { "image/png", "PNG", "image/jpeg", "JPEG", "image/bmp", "DeviceIndependentBitmap", "Bitmap" };
+
+        try
+        {
+#pragma warning disable CS0618 // Avalonia 11.3 deprecated string-keyed clipboard APIs in favor of DataFormat-typed ones; the string overloads still work cross-platform.
+            var available = await clipboard.GetFormatsAsync();
+            foreach (var fmt in candidates)
+            {
+                if (!available.Contains(fmt, StringComparer.OrdinalIgnoreCase)) continue;
+                var data = await clipboard.GetDataAsync(fmt);
+                if (data is byte[] bytes && bytes.Length > 0)
+                    return bytes;
+            }
+#pragma warning restore CS0618
+        }
+        catch
+        {
+            // Fall through and return null
+        }
+        return null;
+    }
+
+    private async Task<string?> PromptForUrlAsync()
+    {
+        string? result = null;
+        var dialog = new Window
+        {
+            Title = "Load Image from URL",
+            Width = 480,
+            Height = 160,
+            CanResize = false,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+        var panel = new StackPanel { Margin = new Avalonia.Thickness(16), Spacing = 10 };
+        panel.Children.Add(new TextBlock { Text = "Paste an image URL:", FontSize = 12 });
+        var input = new TextBox { Watermark = "https://..." };
+        panel.Children.Add(input);
+
+        var buttons = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+            Spacing = 8
+        };
+        var ok = new Button { Content = "Load", Width = 80, IsDefault = true };
+        var cancel = new Button { Content = "Cancel", Width = 80, IsCancel = true };
+        ok.Click += (_, _) => { result = input.Text; dialog.Close(); };
+        cancel.Click += (_, _) => { result = null; dialog.Close(); };
+        buttons.Children.Add(ok);
+        buttons.Children.Add(cancel);
+        panel.Children.Add(buttons);
+
+        dialog.Content = panel;
+        dialog.Opened += (_, _) => input.Focus();
+        await dialog.ShowDialog(this);
+        return result;
+    }
+
+    private async Task ShowImageErrorAsync(string message)
+    {
+        var dialog = new Window
+        {
+            Title = "Image Error",
+            Width = 380,
+            Height = 160,
+            CanResize = false,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+        var panel = new StackPanel { Margin = new Avalonia.Thickness(16), Spacing = 14 };
+        panel.Children.Add(new TextBlock
+        {
+            Text = message,
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            FontSize = 13
+        });
+        var ok = new Button
+        {
+            Content = "OK",
+            Width = 80,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+            IsDefault = true,
+            IsCancel = true
+        };
+        ok.Click += (_, _) => dialog.Close();
+        panel.Children.Add(ok);
+        dialog.Content = panel;
+        await dialog.ShowDialog(this);
     }
 
     private async Task<string?> PickFolderAsync()

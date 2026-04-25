@@ -426,6 +426,23 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    public void ReplaceImageFromBytes(byte[] data)
+    {
+        if (SelectedCard == null || _imageService == null) return;
+
+        try
+        {
+            _imageService.ImportCardImageFromBytes(SelectedCard.CardStat, data);
+            CardImagePath = null;
+            CardImagePath = _db.GetCardImagePath(SelectedCard.CardStat);
+            StatusText = $"Image replaced for card #{SelectedCard.CardStat}";
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"Image error: {ex.Message}";
+        }
+    }
+
     public void MarkCardModified()
     {
         if (SelectedCard == null) return;
