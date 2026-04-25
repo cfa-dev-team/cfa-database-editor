@@ -151,12 +151,12 @@ public partial class JpArchiveViewModel : ViewModelBase
         int added = 0;
         foreach (var entry in toProcess)
         {
-            // Determine target file: prefer clan file, fall back to nation file
+            // Determine target file: nation takes precedence over clan.
             string? targetFile = null;
-            if (entry.SelectedClan != null && entry.SelectedClan.Id != 0 && entry.SelectedClan.FileName != null)
-                targetFile = entry.SelectedClan.FileName;
-            else if (entry.SelectedNation != null && entry.SelectedNation.Id != 0 && entry.SelectedNation.FileName != null)
+            if (entry.SelectedNation != null && entry.SelectedNation.Id != 0 && entry.SelectedNation.FileName != null)
                 targetFile = entry.SelectedNation.FileName;
+            else if (entry.SelectedClan != null && entry.SelectedClan.Id != 0 && entry.SelectedClan.FileName != null)
+                targetFile = entry.SelectedClan.FileName;
 
             if (targetFile == null)
             {
