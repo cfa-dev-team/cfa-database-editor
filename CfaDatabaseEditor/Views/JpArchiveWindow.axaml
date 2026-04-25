@@ -61,10 +61,19 @@
                                 Background="{DynamicResource SectionBackgroundBrush}" Width="220">
                             <StackPanel Spacing="4">
                                 <!-- Card Image -->
-                                <Border Background="#333" CornerRadius="4" Height="300">
-                                    <Image Source="{Binding ImageData, Converter={StaticResource BytesToBitmap}}"
-                                           Stretch="Uniform" StretchDirection="DownOnly"/>
-                                </Border>
+                                <Grid>
+                                    <Border Background="#333" CornerRadius="4" Height="300">
+                                        <Image Source="{Binding ImageData, Converter={StaticResource BytesToBitmap}}"
+                                               Stretch="Uniform" StretchDirection="DownOnly"/>
+                                    </Border>
+                                    <Button Content="&#x1F504;" FontSize="12"
+                                            Padding="4,1" MinWidth="0" MinHeight="0"
+                                            HorizontalAlignment="Right" VerticalAlignment="Top"
+                                            Margin="0,4,4,0"
+                                            Command="{Binding DataContext.FlipImageCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="Flip 180°"/>
+                                </Grid>
 
                                 <!-- Card Name -->
                                 <TextBox Text="{Binding CardName, Mode=TwoWay}"

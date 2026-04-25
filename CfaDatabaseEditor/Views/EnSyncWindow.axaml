@@ -127,9 +127,15 @@
                     <!-- Side-by-side images -->
                     <Grid RowDefinitions="Auto,*" ColumnDefinitions="*,8,*">
                         <!-- Labels -->
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="EN (Downloaded)"
-                                   FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center"
-                                   Margin="0,0,0,4"/>
+                        <DockPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,4">
+                            <Button DockPanel.Dock="Right" Content="&#x1F504;" FontSize="12"
+                                    Padding="6,1" MinWidth="0" MinHeight="0"
+                                    Command="{Binding FlipSelectedImageCommand}"
+                                    ToolTip.Tip="Flip 180° &amp; re-match"/>
+                            <TextBlock Text="EN (Downloaded)"
+                                       FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </DockPanel>
                         <TextBlock Grid.Row="0" Grid.Column="2" Text="CFA (Current)"
                                    FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center"
                                    Margin="0,0,0,4"/>

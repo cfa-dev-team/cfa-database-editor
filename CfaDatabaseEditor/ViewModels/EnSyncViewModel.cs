@@ -156,6 +156,47 @@ public partial class EnSyncViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void FlipSelectedImage()
+    {
+        if (SelectedResult?.EnImageData == null) return;
+
+        var flipped = ImageService.Flip180(SelectedResult.EnImageData);
+        SelectedResult.EnImageData = flipped;
+
+        // Refresh preview from new bytes
+        try
+        {
+            using var stream = new MemoryStream(flipped);
+            EnPreviewImage = new Bitmap(stream);
+        }
+        catch { EnPreviewImage = null; }
+
+        // Re-match against the existing CFA card index
+        if (_db != null)
+        {
+            var match = _matcher.FindBestMatch(flipped);
+            if (match.HasValue)
+            {
+                SelectedResult.MatchedCard = _db.AllCards.FirstOrDefault(c => c.CardStat == match.Value.CardStat);
+                SelectedResult.Confidence = match.Value.Confidence;
+            }
+            else
+            {
+                SelectedResult.MatchedCard = null;
+                SelectedResult.Confidence = 0;
+            }
+        }
+
+        // Flipping invalidates any prior approval
+        SelectedResult.IsApproved = false;
+
+        // Refresh the right-hand CFA preview for the (possibly new) match
+        LoadCfaPreview(SelectedResult);
+
+        ProgressText = $"Flipped image and re-matched. Confidence: {SelectedResult.Confidence}%";
+    }
+
+    [RelayCommand]
     private void ApproveAboveThreshold()
     {
         int count = 0;

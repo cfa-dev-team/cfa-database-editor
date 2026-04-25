@@ -104,6 +104,13 @@ public partial class JpArchiveViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void FlipImage(JpArchiveCard? card)
+    {
+        if (card?.ImageData == null) return;
+        card.ImageData = ImageService.Flip180(card.ImageData);
+    }
+
+    [RelayCommand]
     private void SelectAll()
     {
         foreach (var card in Cards)

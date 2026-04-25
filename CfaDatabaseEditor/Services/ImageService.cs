@@ -74,6 +74,30 @@ public class ImageService
         return data.ToArray();
     }
 
+    /// <summary>
+    /// Rotates the image 180 degrees and returns re-encoded PNG bytes.
+    /// Used to manually flip cards that the auto-rotation got the wrong way around
+    /// (e.g. BanG Dream! Song Order cards).
+    /// </summary>
+    public static byte[] Flip180(byte[] imageData)
+    {
+        using var bitmap = SKBitmap.Decode(imageData);
+        if (bitmap == null) return imageData;
+
+        var rotated = new SKBitmap(bitmap.Width, bitmap.Height);
+        using (var canvas = new SKCanvas(rotated))
+        {
+            canvas.Translate(bitmap.Width, bitmap.Height);
+            canvas.RotateDegrees(180);
+            canvas.DrawBitmap(bitmap, 0, 0);
+        }
+
+        using var image = SKImage.FromBitmap(rotated);
+        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+        rotated.Dispose();
+        return data.ToArray();
+    }
+
     private static void SaveResized(SKBitmap original, int targetWidth, string outputPath)
     {
         float ratio = (float)targetWidth / original.Width;
