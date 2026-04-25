@@ -2,7 +2,7 @@
 
 Desktop application for editing the [CFA (Cardfight!! Area)](https://github.com/uniquekid/cfa-texts) card database. Built with Avalonia UI and .NET 8.
 
-**Version 1.2.0 beta** | Developed by Sieg, 2026
+**Version 1.3.0 beta** | Developed by Sieg, 2026
 
 ## Features
 
