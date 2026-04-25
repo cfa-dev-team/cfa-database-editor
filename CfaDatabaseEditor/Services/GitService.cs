@@ -205,6 +205,47 @@ public class GitService
     public Task<GitResult> CreateBranchAsync(string branchName)
         => RunAsync("checkout", "-b", branchName);
 
+    /// <summary>
+    /// Reads the file content as it exists at HEAD. Returns null when the file
+    /// did not exist at HEAD (untracked or freshly added) or any error occurs.
+    /// Bytes are returned raw — callers decode with the project's encoding.
+    /// </summary>
+    public async Task<byte[]?> GetHeadFileBytesAsync(string repoRelativePath)
+    {
+        if (string.IsNullOrEmpty(_repoPath)) return null;
+
+        // git show with binary-safe stdout
+        var psi = new ProcessStartInfo
+        {
+            FileName = "git",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WorkingDirectory = _repoPath,
+        };
+        psi.ArgumentList.Add("show");
+        psi.ArgumentList.Add($"HEAD:{repoRelativePath.Replace('\\', '/')}");
+
+        try
+        {
+            using var proc = Process.Start(psi);
+            if (proc == null) return null;
+            using var ms = new MemoryStream();
+            await proc.StandardOutput.BaseStream.CopyToAsync(ms);
+            await proc.StandardError.ReadToEndAsync();
+            await proc.WaitForExitAsync();
+            return proc.ExitCode == 0 ? ms.ToArray() : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Repository root path (or null when not initialized).</summary>
+    public string? RepoPath => _repoPath;
+
     // ── internals ──
 
     private async Task<bool> CheckGitInstalledAsync()

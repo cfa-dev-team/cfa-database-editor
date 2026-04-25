@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -71,7 +72,15 @@ public partial class GitCommitWindow : Window
 
         foreach (var file in _files)
         {
-            var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+            var panel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                Background = Brushes.Transparent, // make hit-testable for double-tap
+                Cursor = new Cursor(StandardCursorType.Hand),
+                Tag = file
+            };
+            panel.DoubleTapped += OnFileRowDoubleTapped;
 
             var cb = new CheckBox
             {
@@ -100,8 +109,9 @@ public partial class GitCommitWindow : Window
             {
                 Text = file.FilePath,
                 VerticalAlignment = VerticalAlignment.Center,
-                TextTrimming = TextTrimming.CharacterEllipsis
+                TextTrimming = TextTrimming.CharacterEllipsis,
             };
+            ToolTip.SetTip(pathText, "Double-click to view diff");
 
             panel.Children.Add(cb);
             panel.Children.Add(statusBadge);
@@ -255,6 +265,66 @@ public partial class GitCommitWindow : Window
     private void OnCloseClick(object? sender, RoutedEventArgs e)
     {
         Close();
+    }
+
+    private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"
+    };
+
+    private async void OnFileRowDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not StackPanel { Tag: GitFileStatus file }) return;
+        if (_git.RepoPath == null) return;
+
+        try
+        {
+            // For renames, FilePath is the new path; old path is in RawPath ("old -> new").
+            string oldRelative = file.FilePath;
+            string newRelative = file.FilePath;
+            if (file.RawPath.Contains(" -> "))
+            {
+                var parts = file.RawPath.Split(" -> ");
+                oldRelative = parts[0].Trim().Trim('"');
+                newRelative = parts[1].Trim().Trim('"');
+            }
+
+            bool isUntracked = file.IndexStatus == '?' && file.WorkTreeStatus == '?';
+            bool isDeleted = file.IndexStatus == 'D' || file.WorkTreeStatus == 'D';
+
+            byte[]? leftBytes = null;
+            byte[]? rightBytes = null;
+
+            if (!isUntracked)
+                leftBytes = await _git.GetHeadFileBytesAsync(oldRelative);
+
+            if (!isDeleted)
+            {
+                var fullPath = Path.Combine(_git.RepoPath, newRelative);
+                if (File.Exists(fullPath))
+                    rightBytes = await File.ReadAllBytesAsync(fullPath);
+            }
+
+            var ext = Path.GetExtension(newRelative);
+            GitDiffWindow diff;
+            if (ImageExtensions.Contains(ext))
+            {
+                diff = GitDiffWindow.ForImage(file.FilePath, "HEAD", "Working tree", leftBytes, rightBytes);
+            }
+            else
+            {
+                var encoding = GmlParser.GetEncoding();
+                var leftText = leftBytes != null ? encoding.GetString(leftBytes) : "";
+                var rightText = rightBytes != null ? encoding.GetString(rightBytes) : "";
+                diff = new GitDiffWindow(file.FilePath, "HEAD", "Working tree", leftText, rightText);
+            }
+
+            await diff.ShowDialog(this);
+        }
+        catch (Exception ex)
+        {
+            StatusLabel.Text = $"Diff failed: {ex.Message}";
+        }
     }
 
     private void OnCommitMessageChanged(object? sender, TextChangedEventArgs e)
