@@ -20,6 +20,16 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty] private string _statusText = "No database loaded";
     [ObservableProperty] private bool _isLoaded;
 
+    // Deploy
+    [ObservableProperty] private bool _updateOldSprites = ConfigService.Load().UpdateOldSprites;
+
+    partial void OnUpdateOldSpritesChanged(bool value)
+    {
+        var config = ConfigService.Load();
+        config.UpdateOldSprites = value;
+        ConfigService.Save(config);
+    }
+
     // Git
     [ObservableProperty] private string _gitBranchDisplay = "";
     [ObservableProperty] private Avalonia.Media.IBrush _gitBranchColor = Avalonia.Media.Brushes.Gray;

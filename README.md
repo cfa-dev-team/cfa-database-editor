@@ -18,6 +18,7 @@ Desktop application for editing the [CFA (Cardfight!! Area)](https://github.com/
 - **EN Database Sync** - Scrape official English card data from en.cf-vanguard.com, match to CFA cards by artwork similarity (perceptual hashing), and update names/images
 - **JP Card Archive** - Scrape card images from the JP "Today's Card" archive and bulk-import them as new cards with nation/clan assignment
 - **MD5 Checksums** - Automatic regeneration of `.md5sums` files on save (custom card images are excluded)
+- **Deploy to Local CFA** - One-click deploy of the loaded database to a local CFA install. Copies the `Text/` folder, copies new sprites, and optionally updates older sprites based on file timestamps. Includes a "Launch CFA" prompt after deploy
 - **Windows-1251 Encoding** - Full support for the CFA database's encoding, with automatic apostrophe sanitization on save and encoding issue warnings
 
 ## Prerequisites
@@ -102,6 +103,16 @@ On save, the editor writes faction definitions, `global.MaxCustomFaction`, `glob
 ### Replacing Card Images
 
 Select a card, then click **Replace Image** in the right panel. The image is automatically resized to both 300px and 75px variants.
+
+### Deploy to Local CFA
+
+The **Deploy** menu pushes the loaded database to a local CFA install:
+
+- **Deploy** — copies `Text/`, then copies any sprites missing at the destination. If "Update Old Sprites" is enabled, sprites whose source is newer than the destination are also copied (mtime comparison, like `xcopy /d`). Prompts for `Vanguard.exe` on first use and remembers its folder.
+- **Choose Local CFA...** — pick (or re-pick) `Vanguard.exe` to set the deploy target.
+- **Update Old Sprites** — checkbox (on by default, persisted to `config.json`). When off, only brand-new sprites are deployed.
+
+After a successful deploy, a popup offers to launch CFA.
 
 ### Keyboard Shortcuts
 

@@ -70,6 +70,14 @@
                 <MenuItem Header="EN Database _Sync..." Click="OnEnSyncClick"/>
                 <MenuItem Header="_JP Card Archive..." Click="OnJpArchiveClick"/>
             </MenuItem>
+            <MenuItem Header="_Deploy">
+                <MenuItem Header="_Deploy" Click="OnDeployClick"
+                          IsEnabled="{Binding IsLoaded}"/>
+                <MenuItem Header="_Choose Local CFA..." Click="OnChooseLocalCfaClick"/>
+                <Separator/>
+                <MenuItem Header="_Update Old Sprites" ToggleType="CheckBox"
+                          IsChecked="{Binding UpdateOldSprites, Mode=TwoWay}"/>
+            </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem Header="_Reset Layout" Click="OnResetLayoutClick"/>
                 <Separator/>

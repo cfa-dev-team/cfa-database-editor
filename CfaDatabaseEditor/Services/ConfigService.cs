@@ -23,6 +23,12 @@ public class AppConfig
 
     [JsonPropertyName("layout")]
     public LayoutConfig? Layout { get; set; }
+
+    [JsonPropertyName("localCfaPath")]
+    public string? LocalCfaPath { get; set; }
+
+    [JsonPropertyName("updateOldSprites")]
+    public bool UpdateOldSprites { get; set; } = true;
 }
 
 public static class ConfigService

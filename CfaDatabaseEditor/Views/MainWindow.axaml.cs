@@ -536,6 +536,134 @@ public partial class MainWindow : Window
         }
     }
 
+    // ── Deploy handlers ──
+
+    private async void OnDeployClick(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm) return;
+        if (!vm.Database.IsLoaded || vm.Database.RootPath == null) return;
+
+        var config = ConfigService.Load();
+        var cfaPath = config.LocalCfaPath;
+
+        if (string.IsNullOrEmpty(cfaPath) || !Directory.Exists(cfaPath))
+        {
+            cfaPath = await PromptForCfaPathAsync();
+            if (cfaPath == null) return;
+            config = ConfigService.Load();
+            config.LocalCfaPath = cfaPath;
+            ConfigService.Save(config);
+        }
+
+        await RunDeployAsync(vm, vm.Database.RootPath, cfaPath);
+    }
+
+    private async void OnChooseLocalCfaClick(object? sender, RoutedEventArgs e)
+    {
+        var cfaPath = await PromptForCfaPathAsync();
+        if (cfaPath == null) return;
+
+        var config = ConfigService.Load();
+        config.LocalCfaPath = cfaPath;
+        ConfigService.Save(config);
+
+        if (DataContext is MainWindowViewModel vm)
+            vm.StatusText = $"Local CFA path set: {cfaPath}";
+    }
+
+    private async Task<string?> PromptForCfaPathAsync()
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Select Vanguard.exe",
+            AllowMultiple = false,
+            FileTypeFilter = new[]
+            {
+                new FilePickerFileType("Vanguard.exe") { Patterns = new[] { "Vanguard.exe" } },
+                new FilePickerFileType("Executables") { Patterns = new[] { "*.exe" } }
+            }
+        });
+        if (files.Count == 0) return null;
+        var localPath = files[0].TryGetLocalPath();
+        if (localPath == null) return null;
+        return Path.GetDirectoryName(localPath);
+    }
+
+    private async Task RunDeployAsync(MainWindowViewModel vm, string sourceRoot, string cfaPath)
+    {
+        try
+        {
+            vm.StatusText = "Deploying...";
+            var progress = new Progress<string>(s => vm.StatusText = s);
+            var stats = await DeployService.DeployAsync(sourceRoot, cfaPath, vm.UpdateOldSprites, progress);
+            vm.StatusText =
+                $"Deploy complete. Text files: {stats.TextFiles}, " +
+                $"new sprites: {stats.NewSprites}, updated: {stats.UpdatedSprites}, skipped: {stats.SkippedSprites}.";
+
+            var launch = await ConfirmLaunchAsync();
+            if (launch) LaunchVanguard(cfaPath, vm);
+        }
+        catch (Exception ex)
+        {
+            vm.StatusText = $"Deploy failed: {ex.Message}";
+        }
+    }
+
+    private static void LaunchVanguard(string cfaPath, MainWindowViewModel vm)
+    {
+        var exe = Path.Combine(cfaPath, "Vanguard.exe");
+        if (!File.Exists(exe))
+        {
+            vm.StatusText = $"Vanguard.exe not found in {cfaPath}";
+            return;
+        }
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = exe,
+                WorkingDirectory = cfaPath,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            vm.StatusText = $"Failed to launch Vanguard: {ex.Message}";
+        }
+    }
+
+    private async Task<bool> ConfirmLaunchAsync()
+    {
+        var result = false;
+        var dialog = new Window
+        {
+            Title = "Launch CFA",
+            Width = 320,
+            Height = 140,
+            CanResize = false,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+        var panel = new StackPanel { Margin = new Avalonia.Thickness(20), Spacing = 16 };
+        panel.Children.Add(new TextBlock { Text = "Deployment complete. Launch CFA now?", FontSize = 13 });
+
+        var buttonPanel = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right,
+            Spacing = 8
+        };
+        var yes = new Button { Content = "Yes", Width = 80, IsDefault = true };
+        var no = new Button { Content = "No", Width = 80, IsCancel = true };
+        yes.Click += (_, _) => { result = true; dialog.Close(); };
+        no.Click += (_, _) => { result = false; dialog.Close(); };
+        buttonPanel.Children.Add(yes);
+        buttonPanel.Children.Add(no);
+        panel.Children.Add(buttonPanel);
+        dialog.Content = panel;
+        await dialog.ShowDialog(this);
+        return result;
+    }
+
     private void OnResetLayoutClick(object? sender, RoutedEventArgs e)
     {
         ApplyDefaultLayout();
